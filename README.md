@@ -1,13 +1,15 @@
-<img src=img/malpaca_logo.JPG alt="The Green Thumb Logo" width="194" height="180">
+<img src=img/malpaca_seq_logo.JPG alt="The Green Thumb Logo" width="199" height="173">
 
 --------------------------------------------------------------------------------
 [![MIT License](https://img.shields.io/github/license/johanneshagspiel/malpaca-pub)](LICENSE)
 [![Top Language](https://img.shields.io/github/languages/top/johanneshagspiel/malpaca-pub)](https://github.com/johanneshagspiel/malpaca-pub)
 [![Latest Release](https://img.shields.io/github/v/release/johanneshagspiel/malpaca-pub)](https://github.com/johanneshagspiel/malpaca-pub/releases/)
 
-# MalPaCA
+# MalPaCA Seq+
 
-This repository contains  
+This repository contains an updated version of the [MalPaCA](https://github.com/tudelft-cda-lab/malpaca-pub) algorithm, 
+which is a novel, unsupervised clustering algorithm that creates, based on the network flow of a software a behavioral profile representing its actual capabilities.
+The improvements 
 
 ## Features
 
@@ -49,13 +51,13 @@ The original "MalPaCA" framework was published under the MIT license, which can 
 
 **If you use MalPaCA in a scientific work, consider citing the following paper:**
 
-_@article{nadeembeyond,
-  title={Beyond Labeling: Using Clustering to Build Network Behavioral Profiles of Malware Families},
-  author={Nadeem, Azqa and Hammerschmidt, Christian and Ga{\~n}{\'a}n, Carlos H and Verwer, Sicco},
-  journal={Malware Analysis Using Artificial Intelligence and Deep Learning},
-  pages={381},
-  publisher={Springer}
-}_
+    @article{nadeembeyond,
+      title={Beyond Labeling: Using Clustering to Build Network Behavioral Profiles of Malware Families},
+      author={Nadeem, Azqa and Hammerschmidt, Christian and Ga{\~n}{\'a}n, Carlos H and Verwer, Sicco},
+      journal={Malware Analysis Using Artificial Intelligence and Deep Learning},
+      pages={381},
+      publisher={Springer}
+    }
 
 ## References
 

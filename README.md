@@ -1,57 +1,51 @@
-# MalPaCA (Malware Packet-sequence Clustering and Analysis)
+<img src=img/malpaca_logo.JPG alt="The Green Thumb Logo" width="194" height="180">
 
-This repo contains the implementation of MalPaCA (Malware Packet-sequence Clustering and Analysis). Roughly, it does the following:
+--------------------------------------------------------------------------------
+[![MIT License](https://img.shields.io/github/license/johanneshagspiel/malpaca-pub)](LICENSE)
+[![Top Language](https://img.shields.io/github/languages/top/johanneshagspiel/malpaca-pub)](https://github.com/johanneshagspiel/malpaca-pub)
+[![Latest Release](https://img.shields.io/github/v/release/johanneshagspiel/malpaca-pub)](https://github.com/johanneshagspiel/malpaca-pub/releases/)
 
-1. It takes as input a pcap file or a folder containing pcap files
-2. It reads each file and splits pcaps into uni-directional connections
-3. Each connection is represented as 4 sequential features, i.e. packet sizes (bytes), inter-arrival-times (ms), source ports, dest ports
-4. Then, for each feature, it computes the pairwise distance between all connections and stores them in their respective distance matrix
-5. The distance matrices are combined using a simple weighted average, where all features have equal weights
-6. The final diatcne matrix goes as input into HDBScan clustering algorithm
-7. The final clusters are post-processed and printed out as a .csv and in their respective temporal heatmaps.
+# MalPaCA
 
-## Usage (for clustering):
-`python malpaca.py {file|folder} {path/to/file|path/to/folder} {experiment-name} {sequence-length-threshold} {speedup}`
+This repository contains  
 
-`{file|folder}` : Choose one option for either one pcap or multiple in a folder
+## Features
 
-`{experiment-name}` : Name of your experiments. It will be used to name the generated artifacts, i.e. distance matrices, tsne plots, clusters.
+With the "G-Code Viewer", printer when executing a G-Code file in both a static and dynamic 2D layer-by-layer view
 
-`{sequence-length-threshold}` : Length of feature sequences
+## Tools
 
-`{speedup}` : Boolean depending on whether to use R's parallel DTW library or not
+| Purpose               | Name                                                                       |
+|-----------------------|----------------------------------------------------------------------------|
+| Programming language  | [Python](https://www.python.org/)                                          |
+| Dependency manager    | [Anaconda](https://www.anaconda.com/products/distribution)                 |
+| Version control system | [Git](https://git-scm.com/)                                                |
+| Clustering Algorithm 	| [HDBSCAN](https://hdbscan.readthedocs.io/en/latest/how_hdbscan_works.html) |
+| Graph Library 		    | [Matplotlib](https://matplotlib.org/)                                   |
 
-Required packages:
 
-`pip install dpkt, statsmodels, cython, dtw, fastdtw, hdbscan`
+## Installation Process
 
-`sudo apt-get install r-base-dev` (If you want to use the `speedup`)
+If you want to import this project and resolve all the dependencies associated with it, it is assumed that you have already installed [Anaconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html), [Python](https://www.python.org/downloads/windows/), an IDE like [PyCharm](https://www.jetbrains.com/pycharm/download/#section=windows) and that your operating system is Windows.
+Re-create the original `MalPaCA` environment from the `environment.yml` file with this command:
 
-## Usage (for re-clustering):
-`python mal-detection.py {path/to/model.pkl} {file|folder} {path/to/file|path/to/folder} {experiment-name} {sequence-length-threshold}`
+	conda env create -f environment.yml
 
-`{path/to/model.pkl}` : Path to the model file of the prior experiment, to which you want to re-cluster new sequences
+Activate the new environment:
+ 
+	conda activate MalPaCA
 
-`{file|folder}` : (For the new experiment) Choose one option for either one pcap or multiple in a folder
+Lastly, check that the new environment was installed correctly:
+	
+	conda env list
 
-`{path/to/file|path/to/folder}`: (For the new experiment) Path to .pcap file (if `file` selected) or folder containing .pcap files (if `folder` selected) 
+## Contributors
 
-`{experiment-name}` : (For the new experiment) Name of your new experiments. It will be used to name the generated artifacts, i.e. distance matrices, tsne plots, clusters.
+The original author of "MalPaCA" was [Azqa Nadeem](https://github.com/azqa) and the original source code can be found [here](https://github.com/tudelft-cda-lab/malpaca-pub).
 
-`{sequence-length-threshold}` : (For the new experiment) Length of feature sequences, i.e. number of packets per sequence to consider for clustering
+## Licence
 
-## Parameters:
-
-1. ngram order : Size of the sliding window for port numbers. Can be found as `ngrams.append(zip(x,x+1,x+2))`. _Default: 3_
-2. sequence-length-threshold (_thresh_) : Length of feature sequences. _Default: 20_
-3. _min\_cluster\_size_ : Minimum cluster size. The smaller, the better. _Default: 7_
-4. _min\_samples_ : Size of radius around each point to consider nearest neighbor. The smaller, the higher the noise samples. _Default: 7_
-5. speedup : `True` | `False` depending on whether you want to speed up the code using R's parallel DTW computation library
-
-## Caveats:
-
-- If connection length falls less than 3 packets, this code will fail (due to trigram calculation).
-- If number of clusters are 0 for some reason, this code will fail.
+The original "MalPaCA" framework was published under the MIT license, which can be found in the [License](LICENSE) file. 
 
 **If you use MalPaCA in a scientific work, consider citing the following paper:**
 
@@ -63,5 +57,6 @@ _@article{nadeembeyond,
   publisher={Springer}
 }_
 
-#### Azqa Nadeem
-#### TU Delft
+## References
+
+The clustering result image in the logo was taken from the [HDBSCAN website](https://hdbscan.readthedocs.io/en/latest/_images/soft_clustering_explanation_6_0.png). 

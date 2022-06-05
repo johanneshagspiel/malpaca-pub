@@ -25,11 +25,11 @@ import time
 
 from graphviz import render
 
-from util.numba_cosine import cosine_similarity_numba
-from util.odtw import _dtw_distance
+from src.util.numba_cosine import cosine_similarity_numba
+from src.util.odtw import _dtw_distance
 
 
-class MalpacaMeImprovedWindow():
+class MalpacaMeImprovedWindowNetflow():
     expname = 'exp'
     window_size = 20
     RPY2 = False
@@ -443,7 +443,7 @@ class MalpacaMeImprovedWindow():
             final_clusters[lab] = [labels[x] for x in occ]
 
         outfile = open(summary_csv_file_path, 'w')
-        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip,window\n")
+        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip,ip_protocol,src_port,dst_port,window\n")
 
         for n, clus in final_clusters.items():
 
@@ -451,19 +451,20 @@ class MalpacaMeImprovedWindow():
 
                 ip = el.split('->')
                 name = ip[0]
-
                 scenario = name.split("_", maxsplit=1)[0]
                 filename = name.split("_", maxsplit=1)[1]
 
                 src_ip = ip[1]
                 dst_ip = ip[2]
+                protocol = ip[3]
+                src_port = ip[4]
+                dst_port = ip[5]
+                window = ip[6]
 
-                window = ip[3]
-
-                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "," + window + "\n"
+                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "," + str(protocol) + "," + str(src_port) + "," + str(dst_port) + "," + window + "\n"
                 outfile.write(new_line)
 
-                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, window, 0]
+                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, window, 0]
                 summary_list.append(new_line_summary)
 
 
@@ -482,10 +483,32 @@ class MalpacaMeImprovedWindow():
 
 
         csv_df = pd.read_csv(summary_csv_file_path)
-        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip'])
-        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip'])
+        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
+        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
 
-        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', 'window', 'file', 'scenario'], how="left")
+        combined_df["src_ip"] = combined_df["src_ip"].apply(lambda x: str(x).strip())
+        combined_df["dst_ip"] = combined_df["dst_ip"].apply(lambda x: str(x).strip())
+        combined_df["src_port"] = combined_df["src_port"].apply(lambda x: str(x).strip())
+        combined_df["dst_port"] = combined_df["dst_port"].apply(lambda x: str(x).strip())
+        combined_df["ip_protocol"] = combined_df["ip_protocol"].apply(lambda x: str(x).strip())
+        combined_df["src_ip"] = combined_df["src_ip"].astype(str)
+        combined_df["dst_ip"] = combined_df["dst_ip"].astype(str)
+        combined_df["src_port"] = combined_df["src_port"].astype(str)
+        combined_df["dst_port"] = combined_df["dst_port"].astype(str)
+        combined_df["ip_protocol"] = combined_df["ip_protocol"].astype(str)
+
+        csv_df["src_ip"] = csv_df["src_ip"].apply(lambda x: str(x).strip())
+        csv_df["dst_ip"] = csv_df["dst_ip"].apply(lambda x: str(x).strip())
+        csv_df["src_port"] = csv_df["src_port"].apply(lambda x: str(x).strip())
+        csv_df["dst_port"] = csv_df["dst_port"].apply(lambda x: str(x).strip())
+        csv_df["ip_protocol"] = csv_df["ip_protocol"].apply(lambda x: str(x).strip())
+        csv_df["src_ip"] = csv_df["src_ip"].astype(str)
+        csv_df["dst_ip"] = csv_df["dst_ip"].astype(str)
+        csv_df["src_port"] = csv_df["src_port"].astype(str)
+        csv_df["dst_port"] = csv_df["dst_port"].astype(str)
+        csv_df["ip_protocol"] = csv_df["ip_protocol"].astype(str)
+
+        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', 'window', "ip_protocol", "src_port", "dst_port", 'scenario', 'file'], how="left")
 
         csv_df = csv_df.sort_values(by="clusnum")
         csv_df.to_csv(summary_csv_file_path, index=False)
@@ -503,7 +526,7 @@ class MalpacaMeImprovedWindow():
         reliability_info_csv_file = path_to_reliability + 'reliability_info' + addition + '.csv'
 
 
-        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "window", "run"]
+        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "ip_protocol", "src_port", "dst_port", "window", "run"]
 
         for run_index in range(1, 10):
 
@@ -533,11 +556,13 @@ class MalpacaMeImprovedWindow():
 
                     src_ip = ip[1]
                     dst_ip = ip[2]
-
-                    window = ip[3]
+                    protocol = ip[3]
+                    src_port = ip[4]
+                    dst_port = ip[5]
+                    window = ip[6]
                     run = run_index
 
-                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, window, run]
+                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, window, run]
 
                     summary_list.append(new_line_summary_list)
 
@@ -2768,7 +2793,25 @@ class MalpacaMeImprovedWindow():
             src_ip = self.inet_to_str(ip.src)
             dst_ip = self.inet_to_str(ip.dst)
 
-            key = (src_ip, dst_ip)
+            sport = 0
+            dport = 0
+
+            try:
+                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
+                    sport = ip.data.sport
+                    dport = ip.data.dport
+            except:
+                continue
+
+            proto = ip.get_proto(ip.p).__name__.strip()
+
+            src_ip_key = str(src_ip).strip()
+            dst_ip_key = str(dst_ip).strip()
+            proto_key = str(proto).strip()
+            sport_key = str(sport).strip()
+            dport_key = str(dport).strip()
+
+            key = (src_ip_key, dst_ip_key, proto_key, sport_key, dport_key)
 
             timestamp = datetime.datetime.utcfromtimestamp(ts)
 
@@ -2783,15 +2826,7 @@ class MalpacaMeImprovedWindow():
 
             gaps.append(tupple)
 
-            sport = 0
-            dport = 0
 
-            try:
-                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
-                    sport = ip.data.sport
-                    dport = ip.data.dport
-            except:
-                continue
 
             if key not in connections.keys():
                 connections[key] = []
@@ -2805,9 +2840,7 @@ class MalpacaMeImprovedWindow():
 
         final_connections = {}
 
-        for (src_ip, dst_ip), packets in connections.items():  # clean it up
-            src_ip = src_ip
-            dst_ip = dst_ip
+        for (src_ip_key, dst_ip_key, proto_key, sport_key, dport_key), packets in connections.items():  # clean it up
 
             window = 0
             loop_packet_list = []
@@ -2815,10 +2848,9 @@ class MalpacaMeImprovedWindow():
             for index, packet in enumerate(packets):
                 loop_packet_list.append(packet)
                 if len(loop_packet_list) == self.window_size:
-                    final_connections[(src_ip, dst_ip, str(window))] = loop_packet_list
+                    final_connections[(src_ip_key, dst_ip_key, proto_key, sport_key, dport_key, str(window))] = loop_packet_list
                     loop_packet_list = []
                     window = window + 1
-
 
         print("Remaining connections after clean up ", len(connections))
 
@@ -2838,7 +2870,7 @@ class MalpacaMeImprovedWindow():
                 continue
 
             for i, v in connections.items():
-                name = key + "->" + i[0] + "->" + i[1] + "->" + i[2]
+                name = key + "->" + i[0] + "->" + i[1] + "->" + i[2] + "->" + i[3] + "->" + i[4] + "->" + i[5]
                 mapping[name] = fno
                 fno += 1
                 meta[name] = v

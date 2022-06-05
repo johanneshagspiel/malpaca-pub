@@ -23,8 +23,8 @@ import time
 
 from graphviz import render
 
-from util.numba_cosine import cosine_similarity_numba
-from util.odtw import _dtw_distance
+from src.util.numba_cosine import cosine_similarity_numba
+from src.util.odtw import _dtw_distance
 
 
 class MalpacaMeImprovedWindow():

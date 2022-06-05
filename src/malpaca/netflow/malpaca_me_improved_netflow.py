@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-import copy
 import math
-import warnings
 from statistics import mean
 
 import dpkt, datetime, glob, os, csv
@@ -27,13 +25,13 @@ import time
 
 from graphviz import render
 
-from util.numba_cosine import cosine_similarity_numba
-from util.odtw import _dtw_distance
+from src.util.numba_cosine import cosine_similarity_numba
+from src.util.odtw import _dtw_distance
 import warnings
 warnings.filterwarnings("ignore")
 
 
-class MalpacaMeImproved():
+class MalpacaMeImprovedNetflow():
     expname = 'exp'
     thresh = 20
     RPY2 = False
@@ -449,7 +447,7 @@ class MalpacaMeImproved():
             final_clusters[lab] = [labels[x] for x in occ]
 
         outfile = open(summary_csv_file_path, 'w')
-        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip\n")
+        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip,ip_protocol,src_port,dst_port\n")
 
         for n, clus in final_clusters.items():
 
@@ -464,11 +462,14 @@ class MalpacaMeImproved():
 
                 src_ip = ip[1]
                 dst_ip = ip[2]
+                protocol = ip[3]
+                src_port = ip[4]
+                dst_port = ip[5]
 
-                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "\n"
+                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "," + str(protocol) + "," + str(src_port) + "," + str(dst_port) + "\n"
                 outfile.write(new_line)
 
-                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, 0]
+                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, 0]
                 summary_list.append(new_line_summary)
 
         outfile.close()
@@ -487,10 +488,33 @@ class MalpacaMeImproved():
 
         csv_df = pd.read_csv(summary_csv_file_path)
 
-        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip'])
-        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip'])
+        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
+        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
 
-        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', 'scenario', 'file'])
+        combined_df["src_ip"] = combined_df["src_ip"].apply(lambda x: str(x).strip())
+        combined_df["dst_ip"] = combined_df["dst_ip"].apply(lambda x: str(x).strip())
+        combined_df["src_port"] = combined_df["src_port"].apply(lambda x: str(x).strip())
+        combined_df["dst_port"] = combined_df["dst_port"].apply(lambda x: str(x).strip())
+        combined_df["ip_protocol"] = combined_df["ip_protocol"].apply(lambda x: str(x).strip())
+        combined_df["src_ip"] = combined_df["src_ip"].astype(str)
+        combined_df["dst_ip"] = combined_df["dst_ip"].astype(str)
+        combined_df["src_port"] = combined_df["src_port"].astype(str)
+        combined_df["dst_port"] = combined_df["dst_port"].astype(str)
+        combined_df["ip_protocol"] = combined_df["ip_protocol"].astype(str)
+
+        csv_df["src_ip"] = csv_df["src_ip"].apply(lambda x: str(x).strip())
+        csv_df["dst_ip"] = csv_df["dst_ip"].apply(lambda x: str(x).strip())
+        csv_df["src_port"] = csv_df["src_port"].apply(lambda x: str(x).strip())
+        csv_df["dst_port"] = csv_df["dst_port"].apply(lambda x: str(x).strip())
+        csv_df["ip_protocol"] = csv_df["ip_protocol"].apply(lambda x: str(x).strip())
+        csv_df["src_ip"] = csv_df["src_ip"].astype(str)
+        csv_df["dst_ip"] = csv_df["dst_ip"].astype(str)
+        csv_df["src_port"] = csv_df["src_port"].astype(str)
+        csv_df["dst_port"] = csv_df["dst_port"].astype(str)
+        csv_df["ip_protocol"] = csv_df["ip_protocol"].astype(str)
+
+        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port", 'scenario', 'file'])
+
         csv_df = csv_df.sort_values(by="clusnum")
         csv_df.to_csv(summary_csv_file_path, index=False)
 
@@ -506,7 +530,7 @@ class MalpacaMeImproved():
         path_to_reliability_summary = path_to_summaries + 'reliability_summary' + addition + '.csv'
         reliability_info_csv_file = path_to_reliability + 'reliability_info' + addition + '.csv'
 
-        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "run"]
+        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "ip_protocol", "src_port", "dst_port", "run"]
 
         for run_index in range(1, 10):
 
@@ -536,10 +560,13 @@ class MalpacaMeImproved():
 
                     src_ip = ip[1]
                     dst_ip = ip[2]
+                    protocol = ip[3]
+                    src_port = ip[4]
+                    dst_port = ip[5]
 
                     run = run_index
 
-                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, run]
+                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, run]
 
                     summary_list.append(new_line_summary_list)
 
@@ -992,25 +1019,6 @@ class MalpacaMeImproved():
 
         cluster_numbers = sorted(summary_csv_df["clusnum"].unique().tolist())
         cluster_numbers = list(map(lambda x: str(x), cluster_numbers))
-
-        # clustering_error_list_df = []
-        # clustering_error_list = []
-        #
-        # for cluster_number in cluster_numbers:
-        #
-        #     if cluster_number != '-1':
-        #         if cluster_number in error_packets_per_cluster:
-        #             error_packets = len(error_packets_per_cluster[cluster_number])
-        #             correct_packets = len(correct_packets_per_cluster[cluster_number])
-        #             per_cluster_error = error_packets / (correct_packets + error_packets)
-        #
-        #         else:
-        #             per_cluster_error = 0
-        #
-        #         clustering_error_list.append(per_cluster_error)
-        #         clustering_error_list_df.append(per_cluster_error)
-        #
-        # clustering_error_list_df.insert(0, "nan")
 
         clustering_error_list_df = []
         for cluster_number in cluster_numbers:
@@ -2732,7 +2740,25 @@ class MalpacaMeImproved():
             src_ip = self.inet_to_str(ip.src)
             dst_ip = self.inet_to_str(ip.dst)
 
-            key = (src_ip, dst_ip)
+            sport = 0
+            dport = 0
+
+            try:
+                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
+                    sport = ip.data.sport
+                    dport = ip.data.dport
+            except:
+                continue
+
+            proto = ip.get_proto(ip.p).__name__.strip()
+
+            src_ip_key = str(src_ip).strip()
+            dst_ip_key = str(dst_ip).strip()
+            proto_key = str(proto).strip()
+            sport_key = str(sport).strip()
+            dport_key = str(dport).strip()
+
+            key = (src_ip_key, dst_ip_key, proto_key, sport_key, dport_key)
 
             timestamp = datetime.datetime.utcfromtimestamp(ts)
 
@@ -2747,15 +2773,6 @@ class MalpacaMeImproved():
 
             gaps.append(tupple)
 
-            sport = 0
-            dport = 0
-
-            try:
-                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
-                    sport = ip.data.sport
-                    dport = ip.data.dport
-            except:
-                continue
 
             if key not in connections.keys():
                 connections[key] = []
@@ -2792,7 +2809,7 @@ class MalpacaMeImproved():
                 continue
 
             for i, v in connections.items():
-                name = key + "->" + i[0] + "->" + i[1]
+                name = key + "->" + i[0] + "->" + i[1] + "->" + i[2] + "->" + i[3] + "->" + i[4]
                 mapping[name] = fno
                 fno += 1
                 meta[name] = v

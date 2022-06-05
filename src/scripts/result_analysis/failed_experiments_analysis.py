@@ -1,28 +1,8 @@
-import csv
 import glob
-import math
 import os
-import sys
-from random import random, seed
-from timeit import default_timer as timer
-import time
-from statistics import mean
-from pathlib import Path
-import networkx as nx
-import numpy as np
-from scapy.layers.inet import IP, UDP
-from scapy.utils import PcapWriter, PcapReader
-import tkinter as tk
-from tkinter import filedialog
-import zat
-from zat.log_to_dataframe import LogToDataFrame
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
-from matplotlib.pyplot import cm
-import matplotlib.transforms as mtrans
-
-from scripts.dataset_analysis.filtered_dataset_analysis import Filtered_Dataset_Analysis
 
 
 class Failed_Experiment_Analysis():

@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-import copy
 import math
-import warnings
 from statistics import mean
 
 import dpkt, datetime, glob, os, csv
@@ -27,30 +25,28 @@ import time
 
 from graphviz import render
 
-from util.numba_cosine import cosine_similarity_numba
-from util.odtw import _dtw_distance
-import warnings
-warnings.filterwarnings("ignore")
+from src.util.numba_cosine import cosine_similarity_numba
+from src.util.odtw import _dtw_distance
 
 
-class MalpacaMeImprovedNetflow():
+class MalpacaMeImprovedWindow():
     expname = 'exp'
-    thresh = 20
+    window_size = 20
     RPY2 = False
     totalconn = 0
 
-    def __init__(self, path_to_folder, path_to_results, path_to_detailed_label_folder, expname, thresh, RPY2):
+    def __init__(self, path_to_folder, path_to_results, path_to_detailed_label_folder, expname, window_size, RPY2):
         self.path_to_folder = path_to_folder
         self.path_to_detailed_label_folder = path_to_detailed_label_folder
         self.expname = expname
-        self.thresh = thresh
+        self.window_size = window_size
         self.RPY2 = RPY2
 
         path_to_results = path_to_results
         os.mkdir(path_to_results + "/" + expname)
         self.path_to_store = str(Path.joinpath(Path(path_to_results), expname)) + "/"
 
-        self.readfolder()
+        self.readfolde_window()
 
         if RPY2 == True:
             pass
@@ -82,7 +78,7 @@ class MalpacaMeImprovedNetflow():
         os.mkdir(path_to_distances)
 
 
-        addition = '_' + self.expname + '_' + str(self.thresh)
+        addition = '_' + self.expname + '_' + str(self.window_size)
 
         # ----- start porting -------
 
@@ -112,8 +108,8 @@ class MalpacaMeImprovedNetflow():
             ipmapping.append((mapping[keys[a]], inv_mapping[mapping[keys[a]]]))
             for b in range(a + 1):
 
-                i = [x[1] for x in values[a]][:self.thresh]
-                j = [x[1] for x in values[b]][:self.thresh]
+                i = [x[1] for x in values[a]][:self.window_size]
+                j = [x[1] for x in values[b]][:self.window_size]
                 if len(i) == 0 or len(j) == 0: continue
 
                 if a == b:
@@ -162,8 +158,8 @@ class MalpacaMeImprovedNetflow():
 
             for b in range(a + 1):
 
-                i = [x[0] for x in values[a]][:self.thresh]
-                j = [x[0] for x in values[b]][:self.thresh]
+                i = [x[0] for x in values[a]][:self.window_size]
+                j = [x[0] for x in values[b]][:self.window_size]
 
                 if len(i) == 0 or len(j) == 0: continue
 
@@ -211,7 +207,7 @@ class MalpacaMeImprovedNetflow():
         for a in range(len(values)):
             profile = dict()
 
-            dat = [x[3] for x in values[a]][:self.thresh]
+            dat = [x[3] for x in values[a]][:self.window_size]
 
             li = zip(dat, dat[1:], dat[2:])
             for b in li:
@@ -275,7 +271,7 @@ class MalpacaMeImprovedNetflow():
         for a in range(len(values)):
 
             profile = dict()
-            dat = [x[4] for x in values[a]][:self.thresh]
+            dat = [x[4] for x in values[a]][:self.window_size]
 
             li = zip(dat, dat[1:], dat[2:])
 
@@ -327,15 +323,14 @@ class MalpacaMeImprovedNetflow():
             for b in range(len(ndistmS)):
                 ndistm[a].append((ndistmB[a][b] + ndistmG[a][b] + ndistmD[a][b] + ndistmS[a][b]) / 4.0)
 
-
         print("Done with distance measurement")
         print("----------------")
 
-        ################
-        # Projection 1 #
-        ################
+        ###################
+        # Data Clustering #
+        ###################
 
-        print("Creating projection plot 1")
+        print("TSNE Projection 1")
 
         graphs_folder = self.path_to_store + "/graphs_folder"
         os.mkdir(graphs_folder)
@@ -388,12 +383,11 @@ class MalpacaMeImprovedNetflow():
         #print("average size of cluster:" + str(float(avg) / float(len(set(clu.labels_)) - 1)))
         print("Samples in noise: " + str(sum([(1 if x == -1 else 0) for x in clu.labels_])))
 
+        ########################
+        # Creating Projections #
+        ########################
 
-        ################
-        # Projection 2 #
-        ################
-
-        print("Creating projection plot 2")
+        print("Creating projections")
 
         cols = ['royalblue', 'red', 'darksalmon', 'sienna', 'mediumpurple', 'palevioletred', 'plum', 'darkgreen',
                 'lightseagreen', 'mediumvioletred', 'gold', 'navy', 'sandybrown', 'darkorchid', 'olivedrab', 'rosybrown',
@@ -421,7 +415,7 @@ class MalpacaMeImprovedNetflow():
 
             plt.annotate(txt, (projection.T[0][i], projection.T[1][i]), color=col[i], alpha=0.6)
 
-        plt.savefig(path_clustering_results + "/clustering-result" + addition)
+        plt.savefig(path_clustering_results + "clustering-result" + addition)
         plt.close()
         plt.clf()
 
@@ -449,14 +443,13 @@ class MalpacaMeImprovedNetflow():
             final_clusters[lab] = [labels[x] for x in occ]
 
         outfile = open(summary_csv_file_path, 'w')
-        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip,ip_protocol,src_port,dst_port\n")
+        outfile.write("clusnum,connnum,probability,scenario,file,src_ip,dst_ip,window\n")
 
         for n, clus in final_clusters.items():
 
             for idx, el in enumerate([inv_mapping[x] for x in clus]):
 
                 ip = el.split('->')
-
                 name = ip[0]
 
                 scenario = name.split("_", maxsplit=1)[0]
@@ -464,15 +457,15 @@ class MalpacaMeImprovedNetflow():
 
                 src_ip = ip[1]
                 dst_ip = ip[2]
-                protocol = ip[3]
-                src_port = ip[4]
-                dst_port = ip[5]
 
-                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "," + str(protocol) + "," + str(src_port) + "," + str(dst_port) + "\n"
+                window = ip[3]
+
+                new_line = str(n) + "," + str(mapping[el]) + "," + str(final_probs[n][idx]) + "," + str(scenario) + "," + str(filename) + "," + src_ip + "," + dst_ip + "," + window + "\n"
                 outfile.write(new_line)
 
-                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, 0]
+                new_line_summary = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, window, 0]
                 summary_list.append(new_line_summary)
+
 
         outfile.close()
 
@@ -489,33 +482,10 @@ class MalpacaMeImprovedNetflow():
 
 
         csv_df = pd.read_csv(summary_csv_file_path)
+        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip'])
+        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip'])
 
-        csv_df = csv_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
-        combined_df = combined_df.sort_values(by=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port"])
-
-        combined_df["src_ip"] = combined_df["src_ip"].apply(lambda x: str(x).strip())
-        combined_df["dst_ip"] = combined_df["dst_ip"].apply(lambda x: str(x).strip())
-        combined_df["src_port"] = combined_df["src_port"].apply(lambda x: str(x).strip())
-        combined_df["dst_port"] = combined_df["dst_port"].apply(lambda x: str(x).strip())
-        combined_df["ip_protocol"] = combined_df["ip_protocol"].apply(lambda x: str(x).strip())
-        combined_df["src_ip"] = combined_df["src_ip"].astype(str)
-        combined_df["dst_ip"] = combined_df["dst_ip"].astype(str)
-        combined_df["src_port"] = combined_df["src_port"].astype(str)
-        combined_df["dst_port"] = combined_df["dst_port"].astype(str)
-        combined_df["ip_protocol"] = combined_df["ip_protocol"].astype(str)
-
-        csv_df["src_ip"] = csv_df["src_ip"].apply(lambda x: str(x).strip())
-        csv_df["dst_ip"] = csv_df["dst_ip"].apply(lambda x: str(x).strip())
-        csv_df["src_port"] = csv_df["src_port"].apply(lambda x: str(x).strip())
-        csv_df["dst_port"] = csv_df["dst_port"].apply(lambda x: str(x).strip())
-        csv_df["ip_protocol"] = csv_df["ip_protocol"].apply(lambda x: str(x).strip())
-        csv_df["src_ip"] = csv_df["src_ip"].astype(str)
-        csv_df["dst_ip"] = csv_df["dst_ip"].astype(str)
-        csv_df["src_port"] = csv_df["src_port"].astype(str)
-        csv_df["dst_port"] = csv_df["dst_port"].astype(str)
-        csv_df["ip_protocol"] = csv_df["ip_protocol"].astype(str)
-
-        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', "ip_protocol", "src_port", "dst_port", 'scenario', 'file'])
+        csv_df = csv_df.merge(right=combined_df, on=['src_ip', 'dst_ip', 'window', 'file', 'scenario'], how="left")
 
         csv_df = csv_df.sort_values(by="clusnum")
         csv_df.to_csv(summary_csv_file_path, index=False)
@@ -526,13 +496,14 @@ class MalpacaMeImprovedNetflow():
 
         print("Determining Reliability")
 
-        path_to_reliability = self.path_to_store + "/reliability/"
+        path_to_reliability = self.path_to_store +"/reliability/"
         os.mkdir(path_to_reliability)
 
         path_to_reliability_summary = path_to_summaries + 'reliability_summary' + addition + '.csv'
         reliability_info_csv_file = path_to_reliability + 'reliability_info' + addition + '.csv'
 
-        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "ip_protocol", "src_port", "dst_port", "run"]
+
+        summary_list_columns = ["clusnum", "connnum", "probability", "scenario", "file", "src_ip", "dst_ip", "window", "run"]
 
         for run_index in range(1, 10):
 
@@ -540,7 +511,7 @@ class MalpacaMeImprovedNetflow():
             sample = 7
 
             temp_model = hdbscan.HDBSCAN(min_cluster_size=size, min_samples=sample, cluster_selection_method='leaf',
-                                         metric='precomputed')
+                                    metric='precomputed')
 
             new_clu = temp_model.fit(np.array([np.array(x) for x in ndistm]))
 
@@ -562,13 +533,11 @@ class MalpacaMeImprovedNetflow():
 
                     src_ip = ip[1]
                     dst_ip = ip[2]
-                    protocol = ip[3]
-                    src_port = ip[4]
-                    dst_port = ip[5]
 
+                    window = ip[3]
                     run = run_index
 
-                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, protocol, src_port, dst_port, run]
+                    new_line_summary_list = [n, mapping[el], final_probs[n][idx], scenario, filename, src_ip, dst_ip, window, run]
 
                     summary_list.append(new_line_summary_list)
 
@@ -579,21 +548,20 @@ class MalpacaMeImprovedNetflow():
         cluster_distribution_df = cluster_distribution_df.rename(columns={"clusnum": "#_occurrences_clusnum"})
         cluster_distribution_df = cluster_distribution_df.reset_index()
         less_ten_same_cluster_df = cluster_distribution_df[cluster_distribution_df["#_occurrences_clusnum"] < 10]
-        percentage_cluster_change = round(
-            (len(less_ten_same_cluster_df) / len(reliability_df[reliability_df["run"] == 0])) * 100, 3)
+        percentage_cluster_change = round((len(less_ten_same_cluster_df) / len(reliability_df[reliability_df["run"] == 0])) * 100, 3)
 
         cluster_probability_df = reliability_df.groupby("connnum")["probability"].value_counts().to_frame()
         cluster_probability_df = cluster_probability_df.rename(columns={"probability": "#_occurrences_probability"})
         cluster_probability_df = cluster_probability_df.reset_index()
         less_ten_same_probability_df = cluster_probability_df[cluster_probability_df["#_occurrences_probability"] < 10]
-        percentage_probability_change = round(
-            (len(less_ten_same_probability_df) / len(reliability_df[reliability_df["run"] == 0])) * 100, 3)
+        percentage_probability_change = round((len(less_ten_same_probability_df) / len(reliability_df[reliability_df["run"] == 0])) * 100, 3)
 
-        data = {"percentage_cluster_change": percentage_cluster_change,
-                "percentage_probability_change": percentage_probability_change}
+
+        data = {"percentage_cluster_change": percentage_cluster_change, "percentage_probability_change": percentage_probability_change}
 
         reliability_summary_df = pd.DataFrame(data, index=[0])
         reliability_summary_df.to_csv(path_to_reliability_summary, index=False)
+
 
         #################
         # Producing DAG #
@@ -633,13 +601,13 @@ class MalpacaMeImprovedNetflow():
                 treeprep[mas][famname] = set()
             treeprep[mas][famname].add(str(filename))
 
-        f2 = open(path_to_dag_results +'mas-details' + addition + '.csv', 'w')
+        f2 = open(path_to_dag_results + 'mas-details' + addition + '.csv', 'w')
         for k, v in treeprep.items():
             for kv, vv in v.items():
                 f2.write(str(k) + ';' + str(kv) + ';' + str(len(vv)) + '\n')
         f2.close()
 
-        with open(path_to_dag_results +'mas-details' + addition + '.csv', 'rU') as f3:
+        with open(path_to_dag_results + 'mas-details' + addition + '.csv', 'rU') as f3:
             csv_reader = csv.reader(f3, delimiter=';')
 
             graph = {}
@@ -717,7 +685,7 @@ class MalpacaMeImprovedNetflow():
             val = set()
             for v in graph.values():
                 val.update(v)
-                f2 = open(path_to_dag_results +'relation-tree' + addition + '.dot', 'w')
+                f2 = open(path_to_dag_results + 'relation-tree' + addition + '.dot', 'w')
                 f2.write("digraph dag {\n")
                 f2.write("rankdir=LR;\n")
                 num = 0
@@ -742,7 +710,7 @@ class MalpacaMeImprovedNetflow():
             # Rendering DAG
 
             try:
-                filename = path_to_dag_results +'relation-tree' + addition + '.dot'
+                filename = path_to_dag_results + 'relation-tree' + addition + '.dot'
                 # src = Source(source=test)
                 # new_name = self.path_to_store + "DAG" + addition + '.png'
                 # src.render(new_name, view=True)
@@ -809,8 +777,7 @@ class MalpacaMeImprovedNetflow():
         dl_average_length_df = dl_average_length_df.rename(columns={"connection_length": "avg_connection_length"})
         dl_average_length_df["avg_connection_length"] = dl_average_length_df["avg_connection_length"].apply(
             lambda x: round(x, 2))
-        dl_con_count_df = combined_summary_df.groupby("detailed_label")[
-            "connection_length"].count().to_frame().reset_index()
+        dl_con_count_df = combined_summary_df.groupby("detailed_label")["connection_length"].count().to_frame().reset_index()
         dl_con_count_df = dl_con_count_df.rename(columns={"connection_length": "connection_count"})
         detailed_label_info_df = dl_average_length_df.merge(right=dl_con_count_df, on="detailed_label")
         detailed_label_info_df["ratio"] = round(
@@ -822,8 +789,7 @@ class MalpacaMeImprovedNetflow():
         fig.patch.set_visible(False)
         ax.axis('off')
         ax.axis('tight')
-        table = ax.table(cellText=detailed_label_info_df.values, colLabels=detailed_label_info_df.columns,
-                         loc='center',
+        table = ax.table(cellText=detailed_label_info_df.values, colLabels=detailed_label_info_df.columns, loc='center',
                          cellLoc='center')
         table.auto_set_column_width(col=list(range(len(detailed_label_info_df.columns))))
         for (row, col), cell in table.get_celld().items():
@@ -834,8 +800,7 @@ class MalpacaMeImprovedNetflow():
         plt.close()
         plt.clf()
 
-        l_average_length_df = combined_summary_df.groupby("label")[
-            "connection_length"].mean().to_frame().reset_index()
+        l_average_length_df = combined_summary_df.groupby("label")["connection_length"].mean().to_frame().reset_index()
         l_average_length_df = l_average_length_df.rename(columns={"connection_length": "avg_connection_length"})
         l_average_length_df["avg_connection_length"] = l_average_length_df["avg_connection_length"].apply(
             lambda x: round(x, 2))
@@ -861,14 +826,11 @@ class MalpacaMeImprovedNetflow():
         plt.close()
         plt.clf()
 
-        name_average_length_df = combined_summary_df.groupby("name")[
-            "connection_length"].mean().to_frame().reset_index()
-        name_average_length_df = name_average_length_df.rename(
-            columns={"connection_length": "avg_connection_length"})
+        name_average_length_df = combined_summary_df.groupby("name")["connection_length"].mean().to_frame().reset_index()
+        name_average_length_df = name_average_length_df.rename(columns={"connection_length": "avg_connection_length"})
         name_average_length_df["avg_connection_length"] = name_average_length_df["avg_connection_length"].apply(
             lambda x: round(x, 2))
-        name_con_count_df = combined_summary_df.groupby("name")[
-            "connection_length"].count().to_frame().reset_index()
+        name_con_count_df = combined_summary_df.groupby("name")["connection_length"].count().to_frame().reset_index()
         name_con_count_df = name_con_count_df.rename(columns={"connection_length": "connection_count"})
         name_info_df = name_average_length_df.merge(right=name_con_count_df, on="name")
         name_info_df["ratio"] = round((name_info_df["connection_count"] / total_amount_connections) * 100, 4)
@@ -903,8 +865,7 @@ class MalpacaMeImprovedNetflow():
                                                                         on="application_category_name")
         application_category_name_info_df["ratio"] = round(
             (application_category_name_info_df["connection_count"] / total_amount_connections) * 100, 4)
-        application_category_name_info_df = application_category_name_info_df.sort_values(by="connection_count",
-                                                                                          ascending=False)
+        application_category_name_info_df = application_category_name_info_df.sort_values(by="connection_count", ascending=False)
         application_category_name_info_df.to_csv(path_application_category_name_csv, index=False)
         application_category_name_info_df["application_category_name"] = application_category_name_info_df[
             "application_category_name"].apply(lambda x: x[0:30])
@@ -965,19 +926,17 @@ class MalpacaMeImprovedNetflow():
         total_detailed_label_list.sort()
 
         combined_summary_df["detailed_label"].str.lower()
-        combined_summary_df["detailed_label"] = combined_summary_df['detailed_label'].replace(["Unknown", "-"],
-                                                                                              'Benign')
+        combined_summary_df["detailed_label"] = combined_summary_df['detailed_label'].replace(["Unknown", "-"], 'Benign')
 
         detailed_label_df = combined_summary_df.groupby("scenario")["detailed_label"].value_counts().to_frame()
-        detailed_label_df = detailed_label_df.rename(columns={"detailed_label": "count"}).reset_index()
+        detailed_label_df = detailed_label_df.rename(columns={"detailed_label" : "count"}).reset_index()
         detailed_label_df = detailed_label_df.reindex(sorted(detailed_label_df.columns), axis=1)
 
-        detailed_label_pt = pd.pivot_table(data=detailed_label_df, values="count", index="scenario",
-                                           columns="detailed_label", aggfunc=np.sum, fill_value=0)
+        detailed_label_pt = pd.pivot_table(data=detailed_label_df, values="count", index="scenario", columns="detailed_label", aggfunc=np.sum, fill_value=0)
         detailed_label_pt.reset_index(drop=False, inplace=True)
 
         if "Unknown" in detailed_label_pt.columns:
-            detailed_label_pt = detailed_label_pt.rename(columns={"Unknown": "Benign"})
+            detailed_label_pt = detailed_label_pt.rename(columns={"Unknown" : "Benign"})
 
         detailed_label_pt.columns = detailed_label_pt.columns.to_series().apply(lambda x: x.lower())
 
@@ -991,19 +950,19 @@ class MalpacaMeImprovedNetflow():
         total_ratio_df = detailed_label_pt.reindex(columns=column_order_list)
         total_ratio_df = total_ratio_df.sort_values(by="scenario")
 
-        total_ratio_df.to_csv(total_ratio_path, index=False)
+        total_ratio_df.to_csv(total_ratio_path, index = False)
 
         relative_ratio_df = detailed_label_pt
 
         for detailed_label in total_detailed_label_list:
             if relative_ratio_df[detailed_label].sum() != 0:
-                relative_ratio_df[detailed_label] = relative_ratio_df[detailed_label].apply(
-                    lambda x: (x / (relative_ratio_df[detailed_label].sum())))
+                relative_ratio_df[detailed_label] = relative_ratio_df[detailed_label].apply(lambda x: (x / (relative_ratio_df[detailed_label].sum())))
 
         relative_ratio_df = relative_ratio_df.reindex(columns=column_order_list)
         relative_ratio_df = relative_ratio_df.sort_values(by="scenario")
 
         relative_ratio_df.to_csv(relative_ratio_path, index=False)
+
 
 
         ###################
@@ -1017,21 +976,39 @@ class MalpacaMeImprovedNetflow():
         cluster_summary_path = path_to_summaries + "cluster_summary" + addition + '.csv'
 
         total_number_connections = len(summary_csv_df.index)
-        total_number_packets = total_number_connections * self.thresh
+        total_number_packets = total_number_connections * self.window_size
 
         cluster_numbers = sorted(summary_csv_df["clusnum"].unique().tolist())
         cluster_numbers = list(map(lambda x: str(x), cluster_numbers))
 
+        # clustering_error_list_df = []
+        # clustering_error_list = []
+        #
+        # for cluster_number in cluster_numbers:
+        #
+        #     if cluster_number != '-1':
+        #         if cluster_number in error_packets_per_cluster:
+        #             error_packets = len(error_packets_per_cluster[cluster_number])
+        #             correct_packets = len(correct_packets_per_cluster[cluster_number])
+        #             per_cluster_error = error_packets / (correct_packets + error_packets)
+        #
+        #         else:
+        #             per_cluster_error = 0
+        #
+        #         clustering_error_list.append(per_cluster_error)
+        #         clustering_error_list_df.append(per_cluster_error)
+        #
+        # clustering_error_list_df.insert(0, "nan")
+
         clustering_error_list_df = []
         for cluster_number in cluster_numbers:
-            clustering_error_list_df.append("nan")
+            clustering_error_list_df.append("na")
 
         packets_per_cluster_list = summary_csv_df.groupby("clusnum")["connection_length"].sum().tolist()
 
         connections_per_cluster_list = summary_csv_df.groupby("clusnum")["connection_length"].count().tolist()
 
         avg_cluster_probability_list = summary_csv_df.groupby("clusnum")["probability"].mean().tolist()
-
 
         per_cluster_label_count = summary_csv_df.groupby("clusnum")["label"].value_counts(normalize=True)
         max_label_per_cluster = per_cluster_label_count.groupby("clusnum").idxmax().to_frame().reset_index()
@@ -1042,36 +1019,49 @@ class MalpacaMeImprovedNetflow():
         label_merged_df_1 = max_label_per_cluster.merge(right=max_label_percentage_per_cluster, on="clusnum")
         avg_label_cluster_purity_list = label_merged_df_1["percentage"].tolist()
 
+        per_cluster_detailed_label_count = summary_csv_df.groupby("clusnum")["detailed_label"].value_counts(
+            normalize=True)
+        max_detailed_label_per_cluster = per_cluster_detailed_label_count.groupby(
+            "clusnum").idxmax().to_frame().reset_index()
+        max_detailed_label_per_cluster["detailed_label"] = max_detailed_label_per_cluster["detailed_label"].apply(
+            lambda x: x[1])
 
-
-        per_cluster_detailed_label_count = summary_csv_df.groupby("clusnum")["detailed_label"].value_counts(normalize=True)
-        max_detailed_label_per_cluster = per_cluster_detailed_label_count.groupby("clusnum").idxmax().to_frame().reset_index()
-        max_detailed_label_per_cluster["detailed_label"] = max_detailed_label_per_cluster["detailed_label"].apply(lambda x: x[1])
-
-        max_detailed_label_percentage_per_cluster = per_cluster_detailed_label_count.groupby("clusnum").max().to_frame().reset_index()
-        max_detailed_label_percentage_per_cluster = max_detailed_label_percentage_per_cluster.rename(columns={"detailed_label": "percentage"})
-        detailed_label_merged_df_1 = max_detailed_label_per_cluster.merge(right=max_detailed_label_percentage_per_cluster, on="clusnum")
+        max_detailed_label_percentage_per_cluster = per_cluster_detailed_label_count.groupby(
+            "clusnum").max().to_frame().reset_index()
+        max_detailed_label_percentage_per_cluster = max_detailed_label_percentage_per_cluster.rename(
+            columns={"detailed_label": "percentage"})
+        detailed_label_merged_df_1 = max_detailed_label_per_cluster.merge(
+            right=max_detailed_label_percentage_per_cluster, on="clusnum")
         avg_detailed_label_cluster_purity_list = detailed_label_merged_df_1["percentage"].tolist()
 
+        per_cluster_application_name_count = summary_csv_df.groupby("clusnum")["application_name"].value_counts(
+            normalize=True)
+        max_cluster_application_name_per_cluster = per_cluster_application_name_count.groupby(
+            "clusnum").idxmax().to_frame().reset_index()
+        max_cluster_application_name_per_cluster["application_name"] = max_cluster_application_name_per_cluster[
+            "application_name"].apply(lambda x: x[1])
 
-        per_cluster_application_name_count = summary_csv_df.groupby("clusnum")["application_name"].value_counts(normalize=True)
-        max_cluster_application_name_per_cluster = per_cluster_application_name_count.groupby("clusnum").idxmax().to_frame().reset_index()
-        max_cluster_application_name_per_cluster["application_name"] = max_cluster_application_name_per_cluster["application_name"].apply(lambda x: x[1])
-
-        max_cluster_application_name_percentage_per_cluster = per_cluster_application_name_count.groupby("clusnum").max().to_frame().reset_index()
-        max_cluster_application_name_percentage_per_cluster = max_cluster_application_name_percentage_per_cluster.rename(columns={"application_name": "percentage"})
-        application_name_merged_df_1 = max_cluster_application_name_per_cluster.merge(right=max_cluster_application_name_percentage_per_cluster, on="clusnum")
+        max_cluster_application_name_percentage_per_cluster = per_cluster_application_name_count.groupby(
+            "clusnum").max().to_frame().reset_index()
+        max_cluster_application_name_percentage_per_cluster = max_cluster_application_name_percentage_per_cluster.rename(
+            columns={"application_name": "percentage"})
+        application_name_merged_df_1 = max_cluster_application_name_per_cluster.merge(
+            right=max_cluster_application_name_percentage_per_cluster, on="clusnum")
         avg_application_name_cluster_purity_list = application_name_merged_df_1["percentage"].tolist()
 
+        per_cluster_application_category_name_count = summary_csv_df.groupby("clusnum")[
+            "application_category_name"].value_counts(normalize=True)
+        max_cluster_application_category_name_per_cluster = per_cluster_application_category_name_count.groupby(
+            "clusnum").idxmax().to_frame().reset_index()
+        max_cluster_application_category_name_per_cluster["application_category_name"] = \
+        max_cluster_application_category_name_per_cluster["application_category_name"].apply(lambda x: x[1])
 
-
-        per_cluster_application_category_name_count = summary_csv_df.groupby("clusnum")["application_category_name"].value_counts(normalize=True)
-        max_cluster_application_category_name_per_cluster = per_cluster_application_category_name_count.groupby("clusnum").idxmax().to_frame().reset_index()
-        max_cluster_application_category_name_per_cluster["application_category_name"] = max_cluster_application_category_name_per_cluster["application_category_name"].apply(lambda x: x[1])
-
-        max_cluster_application_category_name_percentage_per_cluster = per_cluster_application_category_name_count.groupby("clusnum").max().to_frame().reset_index()
-        max_cluster_application_category_name_percentage_per_cluster = max_cluster_application_category_name_percentage_per_cluster.rename(columns={"application_category_name": "percentage"})
-        application_category_name_merged_df_1 = max_cluster_application_category_name_per_cluster.merge(right=max_cluster_application_category_name_percentage_per_cluster, on="clusnum")
+        max_cluster_application_category_name_percentage_per_cluster = per_cluster_application_category_name_count.groupby(
+            "clusnum").max().to_frame().reset_index()
+        max_cluster_application_category_name_percentage_per_cluster = max_cluster_application_category_name_percentage_per_cluster.rename(
+            columns={"application_category_name": "percentage"})
+        application_category_name_merged_df_1 = max_cluster_application_category_name_per_cluster.merge(
+            right=max_cluster_application_category_name_percentage_per_cluster, on="clusnum")
         avg_application_category_name_cluster_purity_list = application_category_name_merged_df_1["percentage"].tolist()
 
         # application_category_name_per_cluster = summary_csv_df.groupby("clusnum")["application_category_name"].count().to_frame().reset_index()
@@ -1081,6 +1071,7 @@ class MalpacaMeImprovedNetflow():
         #     application_category_name_merged_df_2["percentage"] * application_category_name_merged_df_2["packet_count"]
         # avg_application_category_name_cluster_purity_list = application_category_name_merged_df_2["av_application_category_name_cluster_purity"].tolist()
 
+        #avg_cluster_error
 
         per_cluster_name_count = summary_csv_df.groupby("clusnum")["name"].value_counts(normalize=True)
         max_name_per_cluster = per_cluster_name_count.groupby("clusnum").idxmax().to_frame().reset_index()
@@ -1091,16 +1082,16 @@ class MalpacaMeImprovedNetflow():
         name_merged_df_1 = max_name_per_cluster.merge(right=max_name_percentage_per_cluster, on="clusnum")
         avg_name_purity_list = name_merged_df_1["percentage"].tolist()
 
-        data = {"cluster" : cluster_numbers,
-                "clustering_error" : clustering_error_list_df,
-                "num_packets" : packets_per_cluster_list,
-                "num_connections" : connections_per_cluster_list,
-                "avg_cluster_probability" : avg_cluster_probability_list,
-                "avg_label_purity" : avg_label_cluster_purity_list,
-                "avg_detailed_label_purity" : avg_detailed_label_cluster_purity_list,
-                "avg_application_name_purity" : avg_application_name_cluster_purity_list,
-                "avg_application_category_name_purity" : avg_application_category_name_cluster_purity_list,
-                "avg_name_purity" : avg_name_purity_list}
+        data = {"cluster": cluster_numbers,
+                "clustering_error": clustering_error_list_df,
+                "num_packets": packets_per_cluster_list,
+                "num_connections": connections_per_cluster_list,
+                "avg_cluster_probability": avg_cluster_probability_list,
+                "avg_label_purity": avg_label_cluster_purity_list,
+                "avg_detailed_label_purity": avg_detailed_label_cluster_purity_list,
+                "avg_application_name_purity": avg_application_name_cluster_purity_list,
+                "avg_application_category_name_purity": avg_application_category_name_cluster_purity_list,
+                "avg_name_purity": avg_name_purity_list}
 
         cluster_summary_df = pd.DataFrame(data)
         cluster_summary_df.to_csv(cluster_summary_path, index=False)
@@ -1108,7 +1099,6 @@ class MalpacaMeImprovedNetflow():
         ###################
         # Overall Summary #
         ###################
-
 
         print("Creating overall summary file")
 
@@ -1128,20 +1118,18 @@ class MalpacaMeImprovedNetflow():
         noise_percentage = round((number_of_connections_in_noise_cluster / total_number_connections) * 100, 3)
 
         percentage_detailed_labels_in_noise_cluster = round(((summary_csv_df[
-                                                                 (summary_csv_df["detailed_label"] != "-") & (
-                                                                             summary_csv_df["clusnum"] == -1)][
-                                                                 "clusnum"].count()) / (
-                                                                summary_csv_df[summary_csv_df["detailed_label"] != "-"][
-                                                                    "clusnum"].count())) * 100, 3)
-
+                                                                  (summary_csv_df["detailed_label"] != "-") & (
+                                                                          summary_csv_df["clusnum"] == -1)][
+                                                                  "clusnum"].count()) / (
+                                                                 summary_csv_df[
+                                                                     summary_csv_df["detailed_label"] != "-"][
+                                                                     "clusnum"].count())) * 100, 3)
 
         avg_overall_label_purity = mean(avg_label_cluster_purity_list)
         avg_overall_detailed_label_purity = mean(avg_detailed_label_cluster_purity_list)
         avg_overall_application_name_purity = mean(avg_application_name_cluster_purity_list)
         avg_overall_application_category_name_purity = mean(avg_application_category_name_cluster_purity_list)
         avg_overall_name_purity = mean(avg_name_purity_list)
-
-
 
         labels_present = summary_csv_df["label"].unique()
         avg_label_separation_list = []
@@ -1166,16 +1154,14 @@ class MalpacaMeImprovedNetflow():
 
         avg_label_cohesion = round(mean(avg_label_separation_list), 3)
 
-
-
         detailed_labels_present = summary_csv_df["detailed_label"].unique()
         avg_detailed_label_separation_list = []
         avg_detailed_label_separation_list_df = []
 
         for detailed_label in detailed_labels_present:
             detailled_label_count_per_cluster = \
-            summary_csv_df[summary_csv_df["detailed_label"] == detailed_label].groupby("clusnum")[
-                "detailed_label"].count().to_frame().reset_index()
+                summary_csv_df[summary_csv_df["detailed_label"] == detailed_label].groupby("clusnum")[
+                    "detailed_label"].count().to_frame().reset_index()
             detailled_label_count_per_cluster_as_tuple = list(
                 detailled_label_count_per_cluster.itertuples(index=False, name=None))
 
@@ -1191,16 +1177,14 @@ class MalpacaMeImprovedNetflow():
 
         avg_detailed_label_cohesion = round(mean(avg_detailed_label_separation_list), 3)
 
-
-
         application_name_present = summary_csv_df["application_name"].unique()
         avg_application_name_separation_list = []
         avg_application_name_separation_list_df = []
 
         for application_name in application_name_present:
             application_name_count_per_cluster = \
-            summary_csv_df[summary_csv_df["application_name"] == application_name].groupby("clusnum")[
-                "application_name"].count().to_frame().reset_index()
+                summary_csv_df[summary_csv_df["application_name"] == application_name].groupby("clusnum")[
+                    "application_name"].count().to_frame().reset_index()
             application_name_count_per_cluster_as_tuple = list(
                 application_name_count_per_cluster.itertuples(index=False, name=None))
 
@@ -1216,16 +1200,15 @@ class MalpacaMeImprovedNetflow():
 
         avg_application_name_cohesion = round(mean(avg_application_name_separation_list), 3)
 
-
-
         application_category_name_present = summary_csv_df["application_category_name"].unique()
         avg_application_category_name_separation_list = []
         avg_application_category_name_separation_list_df = []
 
         for application_category_name in application_category_name_present:
             application_category_name_count_per_cluster = \
-            summary_csv_df[summary_csv_df["application_category_name"] == application_category_name].groupby("clusnum")[
-                "application_category_name"].count().to_frame().reset_index()
+                summary_csv_df[summary_csv_df["application_category_name"] == application_category_name].groupby(
+                    "clusnum")[
+                    "application_category_name"].count().to_frame().reset_index()
             application_category_name_count_per_cluster_as_tuple = list(
                 application_category_name_count_per_cluster.itertuples(index=False, name=None))
 
@@ -1236,12 +1219,11 @@ class MalpacaMeImprovedNetflow():
                     max_value = count_application_category_name
                 total_count = total_count + count_application_category_name
             separation = max_value / total_count
-            avg_application_category_name_separation_list_df.append((separation, total_count, application_category_name))
+            avg_application_category_name_separation_list_df.append(
+                (separation, total_count, application_category_name))
             avg_application_category_name_separation_list.append(separation)
 
         avg_application_category_name_cohesion = round(mean(avg_application_category_name_separation_list), 3)
-
-
 
         name_present = summary_csv_df["name"].unique()
         avg_name_separation_list = []
@@ -1249,8 +1231,8 @@ class MalpacaMeImprovedNetflow():
 
         for name in name_present:
             name_count_per_cluster = \
-            summary_csv_df[summary_csv_df["name"] == name].groupby("clusnum")[
-                "name"].count().to_frame().reset_index()
+                summary_csv_df[summary_csv_df["name"] == name].groupby("clusnum")[
+                    "name"].count().to_frame().reset_index()
             name_count_per_cluster_as_tuple = list(
                 name_count_per_cluster.itertuples(index=False, name=None))
 
@@ -1265,8 +1247,9 @@ class MalpacaMeImprovedNetflow():
             avg_name_separation_list.append(separation)
 
         avg_name_cohesion = round(mean(avg_name_separation_list), 3)
+        probablity_no_noise = summary_csv_df[summary_csv_df["clusnum"] != -1]
 
-        avg_cluster_probability = round(summary_csv_df["probability"].mean(), 3)
+        avg_cluster_probability = round(probablity_no_noise["probability"].mean(), 3)
 
         # if len(clustering_error_list) > 1:
         #     avg_clustering_error = round(mean(clustering_error_list), 3)
@@ -1275,31 +1258,31 @@ class MalpacaMeImprovedNetflow():
 
         avg_clustering_error = "nan"
 
-        data_overall = {"total_time_processing" : time_for_processing,
-                        "validity_index" : validity_index,
-                        "shilouette_score" : silhouette_score,
-                        "total_number_connections" : total_number_connections,
-                        "total_number_packets" : total_number_packets,
-                        "total_number_clusters" : number_of_clusters,
-                        "avg_cluster_size" : avg_size_of_cluster,
-                        "std_cluster_size" : std_size_of_cluster,
-                        "noise_percentage" : noise_percentage,
+        data_overall = {"total_time_processing": time_for_processing,
+                        "validity_index": validity_index,
+                        "shilouette_score": silhouette_score,
+                        "total_number_connections": total_number_connections,
+                        "total_number_packets": total_number_packets,
+                        "total_number_clusters": number_of_clusters,
+                        "avg_cluster_size": avg_size_of_cluster,
+                        "std_cluster_size": std_size_of_cluster,
+                        "noise_percentage": noise_percentage,
 
-                        "avg_label_cohesion" : avg_label_cohesion,
-                        "avg_detailed_label_cohesion" : avg_detailed_label_cohesion,
-                        "avg_application_name_cohesion" : avg_application_name_cohesion,
-                        "avg_application_category_name_cohesion" : avg_application_category_name_cohesion,
-                        "avg_name_cohesion" : avg_name_cohesion,
+                        "avg_label_cohesion": avg_label_cohesion,
+                        "avg_detailed_label_cohesion": avg_detailed_label_cohesion,
+                        "avg_application_name_cohesion": avg_application_name_cohesion,
+                        "avg_application_category_name_cohesion": avg_application_category_name_cohesion,
+                        "avg_name_cohesion": avg_name_cohesion,
 
-                        "avg_label_purity" : avg_overall_label_purity,
-                        "avg_detailed_label_purity" : avg_overall_detailed_label_purity,
-                        "avg_application_name_purity" : avg_overall_application_name_purity,
-                        "avg_application_category_name_purity" : avg_overall_application_category_name_purity,
-                        "avg_name_purity" : avg_overall_name_purity,
+                        "avg_label_purity": avg_overall_label_purity,
+                        "avg_detailed_label_purity": avg_overall_detailed_label_purity,
+                        "avg_application_name_purity": avg_overall_application_name_purity,
+                        "avg_application_category_name_purity": avg_overall_application_category_name_purity,
+                        "avg_name_purity": avg_overall_name_purity,
 
-                        "avg_cluster_probability" : avg_cluster_probability,
+                        "avg_cluster_probability": avg_cluster_probability,
 
-                        "avg_clustering_error" : avg_clustering_error}
+                        "avg_clustering_error": avg_clustering_error}
 
         summary_overall_df = pd.DataFrame(data_overall, index=[0])
         summary_overall_df.to_csv(overall_summary_path, index=False)
@@ -1331,6 +1314,43 @@ class MalpacaMeImprovedNetflow():
         shortened_summary = pd.DataFrame(data_shortened, index=[0])
         shortened_summary.to_csv(shortened_summary_path, index=False)
 
+        ###################
+        # Window Analysis #
+        ###################
+
+        print("Analyzing window info")
+
+        window_info_path = path_to_summaries + "window_info" + addition + '.csv'
+
+        summary_csv_df = pd.read_csv(summary_csv_file_path)
+
+        summary_csv_df["combined_address"] = summary_csv_df["scenario"] + "_" + summary_csv_df["file"] + "->" + summary_csv_df["src_ip"] + "->" + summary_csv_df["dst_ip"]
+
+
+        per_connection_cluster_count = summary_csv_df.groupby("combined_address")["clusnum"].value_counts(
+            normalize=True)
+        max_cluster_per_connection = per_connection_cluster_count.groupby(
+            "combined_address").idxmax().to_frame().reset_index()
+        max_cluster_per_connection["clusnum"] = max_cluster_per_connection["clusnum"].apply(
+            lambda x: x[1])
+
+        max_cluster_percentage_per_connection = per_connection_cluster_count.groupby(
+            "combined_address").max().to_frame().reset_index()
+        max_cluster_percentage_per_connection = max_cluster_percentage_per_connection.rename(
+            columns={"clusnum": "percentage"})
+        connection_cluster_merged_df_1 = max_cluster_per_connection.merge(
+            right=max_cluster_percentage_per_connection, on="combined_address")
+        avg_window_cohesion_list = connection_cluster_merged_df_1["percentage"].tolist()
+
+        avg_window_cohesion = round(mean(avg_window_cohesion_list), 3)
+
+        data_window = {
+            "avg_window_cohesion" : avg_window_cohesion
+        }
+
+        window_summary = pd.DataFrame(data_window, index=[0])
+        window_summary.to_csv(window_info_path, index=False)
+
         ###############################
         # Performance Matrix Creation #
         ###############################
@@ -1345,7 +1365,6 @@ class MalpacaMeImprovedNetflow():
 
         detailed_label_performance_matrix = performance_matrix_folder + "/detailed_label_performance_matrix" + addition + ".csv"
         detailed_label_performance_matrix_table = performance_matrix_folder + "/detailed_label_performance_matrix" + addition + ".png"
-
 
         label_df = summary_csv_df.groupby("clusnum")["label"].value_counts().to_frame()
         label_df = label_df.rename(columns={"label": "count"})
@@ -1442,7 +1461,6 @@ class MalpacaMeImprovedNetflow():
         plt.close()
         plt.clf()
 
-
         ##################
         # Graph Creation #
         #################
@@ -1473,7 +1491,6 @@ class MalpacaMeImprovedNetflow():
         name_distribution_graph = cluster_graphs_path + "/name_graph" + addition + ".png"
         path_to_name_legend_storage = cluster_graphs_path + "/name_legend" + addition + ".png"
         path_to_name_combined = cluster_graphs_path + "/name_combined" + addition + ".png"
-
 
         ####################
         # application name #
@@ -1521,7 +1538,6 @@ class MalpacaMeImprovedNetflow():
             application_name = unique_application_category_names.pop()
             colors[application_name] = color
 
-
         for index, cluster in enumerate(clusters):
             cluster_df = overall_detailed_label_df[overall_detailed_label_df["clusnum"] == cluster][
                 ["application_name", "count"]]
@@ -1567,11 +1583,12 @@ class MalpacaMeImprovedNetflow():
                                                          colors=[colors[key] for key in
                                                                  cluster_df["application_name"]],
                                                          labeldistance=1.15, textprops={'fontsize': 8})
-                ax[math.floor(index / 4), index % 4].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
+                ax[math.floor(index / 4), index % 4].set_title(
+                    "Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
         if len(clusters) % 4 != 0:
             if len(clusters) > 4:
-                for missing_axis in range(len(clusters) % 4, 4):
+                for missing_axis in range(4 - len(clusters) % 4, 4):
                     ax[nrows - 1, missing_axis].axis('off')
 
         markers = [plt.Line2D([0, 0], [0, 0], color=color, marker='o', linestyle='') for color in colors.values()]
@@ -1586,7 +1603,6 @@ class MalpacaMeImprovedNetflow():
         label_list = [x[0:40] for x in label_list]
         legend = plt.legend(handles=markers, labels=label_list, loc=3, framealpha=1, frameon=True,
                             bbox_to_anchor=(2, 0))
-
         separate_legend = legend.figure
         separate_legend.canvas.draw()
         bbox = legend.get_window_extent()
@@ -1680,41 +1696,45 @@ class MalpacaMeImprovedNetflow():
 
             if len(clusters) == 1:
                 patches, texts = ax.pie(cluster_df["count"], labels=cluster_df["relative_count"],
-                       colors=[colors[key] for key in cluster_df["application_category_name"]])
+                                        colors=[colors[key] for key in cluster_df["application_category_name"]])
                 new_labels = self.clean_up_labels(texts)
                 ax.clear()
                 ax.pie(cluster_df["count"], labels=new_labels,
-                                          colors=[colors[key] for key in cluster_df["application_category_name"]],
-                                          labeldistance=1.15, textprops={'fontsize': 8})
+                       colors=[colors[key] for key in cluster_df["application_category_name"]],
+                       labeldistance=1.15, textprops={'fontsize': 8})
                 ax.set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             elif len(clusters) <= 4:
                 patches, texts = ax[index].pie(cluster_df["count"], labels=cluster_df["relative_count"],
-                                                         colors=[colors[key] for key in
-                                                                 cluster_df["application_category_name"]],
-                                                         labeldistance=1.25)
+                                               colors=[colors[key] for key in
+                                                       cluster_df["application_category_name"]],
+                                               labeldistance=1.25)
                 new_labels = self.clean_up_labels(texts)
                 ax[index].clear()
                 ax[index].pie(cluster_df["count"], labels=new_labels,
-                                          colors=[colors[key] for key in cluster_df["application_category_name"]],
-                                          labeldistance=1.15, textprops={'fontsize': 8})
+                              colors=[colors[key] for key in cluster_df["application_category_name"]],
+                              labeldistance=1.15, textprops={'fontsize': 8})
                 ax[index].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             else:
-                patches, texts = ax[math.floor(index / 4), index % 4].pie(cluster_df["count"], labels=cluster_df["relative_count"],
-                                                         colors=[colors[key] for key in
-                                                                 cluster_df["application_category_name"]],
-                                                         labeldistance=1.25)
+                patches, texts = ax[math.floor(index / 4), index % 4].pie(cluster_df["count"],
+                                                                          labels=cluster_df["relative_count"],
+                                                                          colors=[colors[key] for key in
+                                                                                  cluster_df[
+                                                                                      "application_category_name"]],
+                                                                          labeldistance=1.25)
                 new_labels = self.clean_up_labels(texts)
                 ax[math.floor(index / 4), index % 4].clear()
                 ax[math.floor(index / 4), index % 4].pie(cluster_df["count"], labels=new_labels,
-                                          colors=[colors[key] for key in cluster_df["application_category_name"]],
-                                          labeldistance=1.15, textprops={'fontsize': 8})
-                ax[math.floor(index / 4), index % 4].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
+                                                         colors=[colors[key] for key in
+                                                                 cluster_df["application_category_name"]],
+                                                         labeldistance=1.15, textprops={'fontsize': 8})
+                ax[math.floor(index / 4), index % 4].set_title(
+                    "Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             if len(clusters) % 4 != 0:
                 if len(clusters) > 4:
-                    for missing_axis in range(len(clusters) % 4, 4):
+                    for missing_axis in range(4 - len(clusters) % 4, 4):
                         ax[nrows - 1, missing_axis].axis('off')
 
         markers = [plt.Line2D([0, 0], [0, 0], color=color, marker='o', linestyle='') for color in colors.values()]
@@ -1728,9 +1748,9 @@ class MalpacaMeImprovedNetflow():
 
         label_list = colors.keys()
         label_list = [x[0:40] for x in label_list]
+
         legend = plt.legend(handles=markers, labels=label_list, loc=3, framealpha=1, frameon=True,
                             bbox_to_anchor=(2, 0))
-
         separate_legend = legend.figure
         separate_legend.canvas.draw()
         bbox = legend.get_window_extent()
@@ -1837,11 +1857,12 @@ class MalpacaMeImprovedNetflow():
                                                          colors=[colors[key] for key in
                                                                  cluster_df["label"]],
                                                          labeldistance=1.15, textprops={'fontsize': 8})
-                ax[math.floor(index / 4), index % 4].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
+                ax[math.floor(index / 4), index % 4].set_title(
+                    "Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             if len(clusters) % 4 != 0:
                 if len(clusters) > 4:
-                    for missing_axis in range(len(clusters) % 4, 4):
+                    for missing_axis in range(4 - len(clusters) % 4, 4):
                         ax[nrows - 1, missing_axis].axis('off')
 
         markers = [plt.Line2D([0, 0], [0, 0], color=color, marker='o', linestyle='') for color in colors.values()]
@@ -1978,11 +1999,12 @@ class MalpacaMeImprovedNetflow():
                                                          colors=[colors[key] for key in
                                                                  cluster_df["detailed_label"]],
                                                          labeldistance=1.15, textprops={'fontsize': 8})
-                ax[math.floor(index / 4), index % 4].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
+                ax[math.floor(index / 4), index % 4].set_title(
+                    "Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             if len(clusters) % 4 != 0:
                 if len(clusters) > 4:
-                    for missing_axis in range(len(clusters) % 4, 4):
+                    for missing_axis in range(4 - len(clusters) % 4, 4):
                         ax[nrows - 1, missing_axis].axis('off')
 
         markers = [plt.Line2D([0, 0], [0, 0], color=color, marker='o', linestyle='') for color in colors.values()]
@@ -2117,11 +2139,12 @@ class MalpacaMeImprovedNetflow():
                                                          colors=[colors[key] for key in
                                                                  cluster_df["name"]],
                                                          labeldistance=1.15, textprops={'fontsize': 8})
-                ax[math.floor(index / 4), index % 4].set_title("Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
+                ax[math.floor(index / 4), index % 4].set_title(
+                    "Cluster " + str(cluster) + " (N=" + str(cluster_df["count"].sum()) + ")")
 
             if len(clusters) % 4 != 0:
                 if len(clusters) > 4:
-                    for missing_axis in range(len(clusters) % 4, 4):
+                    for missing_axis in range(4 - len(clusters) % 4, 4):
                         ax[nrows - 1, missing_axis].axis('off')
 
         markers = [plt.Line2D([0, 0], [0, 0], color=color, marker='o', linestyle='') for color in colors.values()]
@@ -2218,7 +2241,7 @@ class MalpacaMeImprovedNetflow():
             dstip = li[6]
             window = li[7]
 
-            name = scenario_name + "_" + file_name + "->" + str(srcip) + "->" + str(dstip)
+            name = scenario_name + "_" + file_name + "->" + str(srcip) + "->" + str(dstip) + "->" + str(window)
             # name = str('%12s->%12s' % (srcip, dstip))
             if li[0] not in clusterinfo.keys():
                 clusterinfo[li[0]] = []
@@ -2255,7 +2278,7 @@ class MalpacaMeImprovedNetflow():
                 dataf = []
 
                 for b in blah:
-                    dataf.append([x[q] for x in b][:self.thresh])
+                    dataf.append([x[q] for x in b][:self.window_size])
 
                 df = pd.DataFrame(dataf, index=labels)
                 df = df.sort_index()
@@ -2280,7 +2303,7 @@ class MalpacaMeImprovedNetflow():
                 dataf = []
 
                 for b in blah:
-                    dataf.append([x[q] for x in b][:self.thresh])
+                    dataf.append([x[q] for x in b][:self.window_size])
                 vmax = max(max(dataf))
                 vmin = min(min(dataf))
 
@@ -2402,7 +2425,7 @@ class MalpacaMeImprovedNetflow():
                 dataf = []
 
                 for b in blah:
-                    dataf.append([x[q] for x in b][:self.thresh])
+                    dataf.append([x[q] for x in b][:self.window_size])
 
                 df = pd.DataFrame(dataf, index=labels)
                 df = df.sort_index()
@@ -2427,7 +2450,7 @@ class MalpacaMeImprovedNetflow():
                 dataf = []
 
                 for b in blah:
-                    dataf.append([x[q] for x in b][:self.thresh])
+                    dataf.append([x[q] for x in b][:self.window_size])
                 vmax = vmax_dic[sname][clusnum]
                 vmin = vmin_dic[sname][clusnum]
 
@@ -2503,7 +2526,7 @@ class MalpacaMeImprovedNetflow():
                     dataf = []
 
                     for b in blah:
-                        dataf.append([x[q] for x in b][:self.thresh])
+                        dataf.append([x[q] for x in b][:self.window_size])
 
                     df = pd.DataFrame(dataf, index=labels)
 
@@ -2527,7 +2550,7 @@ class MalpacaMeImprovedNetflow():
                     dataf = []
 
                     for b in blah:
-                        dataf.append([x[q] for x in b][:self.thresh])
+                        dataf.append([x[q] for x in b][:self.window_size])
                     vmax = vmax_dic[sname][clusnum]
                     vmin = vmin_dic[sname][clusnum]
                     df = pd.DataFrame(dataf, index=labels_heatmap)
@@ -2565,7 +2588,7 @@ class MalpacaMeImprovedNetflow():
                     dataf = []
 
                     for b in blah:
-                        dataf.append([x[q] for x in b][:self.thresh])
+                        dataf.append([x[q] for x in b][:self.window_size])
 
                     df = pd.DataFrame(dataf, index=labels)
 
@@ -2590,7 +2613,7 @@ class MalpacaMeImprovedNetflow():
                     dataf = []
 
                     for b in blah:
-                        dataf.append([x[q] for x in b][:self.thresh])
+                        dataf.append([x[q] for x in b][:self.window_size])
                     vmax = vmax_dic[sname][clusnum]
                     vmin = vmin_dic[sname][clusnum]
                     df = pd.DataFrame(dataf, index=labels_heatmap)
@@ -2642,6 +2665,7 @@ class MalpacaMeImprovedNetflow():
         shortened_summary = pd.read_csv(shortened_summary_path)
         shortened_summary["avg_clustering_error"] = avg_clustering_error
         shortened_summary.to_csv(shortened_summary_path, index=False)
+
 
     def clean_up_labels(self, texts):
 
@@ -2701,7 +2725,9 @@ class MalpacaMeImprovedNetflow():
     bytes, gap_list = [], []
 
 
-    def readpcap(self, filename):
+    def readpcap_window(self, filename):
+
+        print("Window mode")
         print("Reading", os.path.basename(filename))
         mal = 0
         ben = 0
@@ -2742,25 +2768,7 @@ class MalpacaMeImprovedNetflow():
             src_ip = self.inet_to_str(ip.src)
             dst_ip = self.inet_to_str(ip.dst)
 
-            sport = 0
-            dport = 0
-
-            try:
-                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
-                    sport = ip.data.sport
-                    dport = ip.data.dport
-            except:
-                continue
-
-            proto = ip.get_proto(ip.p).__name__.strip()
-
-            src_ip_key = str(src_ip).strip()
-            dst_ip_key = str(dst_ip).strip()
-            proto_key = str(proto).strip()
-            sport_key = str(sport).strip()
-            dport_key = str(dport).strip()
-
-            key = (src_ip_key, dst_ip_key, proto_key, sport_key, dport_key)
+            key = (src_ip, dst_ip)
 
             timestamp = datetime.datetime.utcfromtimestamp(ts)
 
@@ -2775,6 +2783,15 @@ class MalpacaMeImprovedNetflow():
 
             gaps.append(tupple)
 
+            sport = 0
+            dport = 0
+
+            try:
+                if ip.p == dpkt.ip.IP_PROTO_TCP or ip.p == dpkt.ip.IP_PROTO_UDP:
+                    sport = ip.data.sport
+                    dport = ip.data.dport
+            except:
+                continue
 
             if key not in connections.keys():
                 connections[key] = []
@@ -2785,19 +2802,29 @@ class MalpacaMeImprovedNetflow():
         values = []
         todel = []
         print('Before cleanup: Total packets: ', len(gaps), ' in ', len(connections), ' connections.')
-        for i, v in connections.items():  # clean it up
-            if len(v) < self.thresh:
-                todel.append(i)
 
-        for item in todel:
-            del connections[item]
+        final_connections = {}
+
+        for (src_ip, dst_ip), packets in connections.items():  # clean it up
+            src_ip = src_ip
+            dst_ip = dst_ip
+
+            window = 0
+            loop_packet_list = []
+
+            for index, packet in enumerate(packets):
+                loop_packet_list.append(packet)
+                if len(loop_packet_list) == self.window_size:
+                    final_connections[(src_ip, dst_ip, str(window))] = loop_packet_list
+                    loop_packet_list = []
+                    window = window + 1
+
 
         print("Remaining connections after clean up ", len(connections))
 
-        return (gaps, connections)
+        return (gaps, final_connections)
 
-
-    def readfolder(self):
+    def readfolde_window(self):
         fno = 0
         meta = {}
         mapping = {}
@@ -2806,12 +2833,12 @@ class MalpacaMeImprovedNetflow():
         for f in files:
             key = os.path.basename(f)  # [:-5].split('-')
 
-            data, connections = (self.readpcap(f))
+            data, connections = self.readpcap_window(f)
             if len(connections.items()) < 1:
                 continue
 
             for i, v in connections.items():
-                name = key + "->" + i[0] + "->" + i[1] + "->" + i[2] + "->" + i[3] + "->" + i[4]
+                name = key + "->" + i[0] + "->" + i[1] + "->" + i[2]
                 mapping[name] = fno
                 fno += 1
                 meta[name] = v
@@ -2857,5 +2884,3 @@ class MalpacaMeImprovedNetflow():
         self.connlevel_sequence(meta, mapping)
         endc = time.time()
         print('Total time ', (endc - startc))
-
-

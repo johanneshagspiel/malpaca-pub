@@ -1,4 +1,4 @@
-<img src=img/malpaca_seq_logo.JPG alt="The Green Thumb Logo" width="199" height="173">
+<img src=img/malpaca_seq_logo.JPG alt="The MalPaCA Seq Logo" width="199" height="173">
 
 --------------------------------------------------------------------------------
 [![MIT License](https://img.shields.io/github/license/johanneshagspiel/malpaca-pub)](LICENSE)
@@ -25,13 +25,13 @@ In particular:
   - transition graphs that reveal how different segments of the same connection are clustered together differently in subsequent experiments
 
 <p align="center">
-	<img src=img/example_transition_graph.png alt="Example Transition Graph" width="359" height="262">
+	<img src=img/example_transition_graph.png alt="Example Transition Graph" width="312" height="228">
 </p>
 
   - graphs detailing the make-up of each clusters in terms of label or application category if such information is provided through prior network analysis with [NFStream](https://github.com/nfstream/nfstream). 
 
 <p align="center">
-	<img src=img/example_detailed_labels_overview.png alt="Example Detailed Labels Overview Graph" width="356" height="184">
+	<img src=img/example_detailed_labels_overview.png alt="Example Detailed Labels Overview Graph" width="388" height="201">
 </p>
 
 

@@ -106,7 +106,7 @@ class Old_Scripts():
                 ip_tos = packet_dic["IP"]["tos"]
 
     @staticmethod
-    def compare_original_ratios_to_current_ratios(path_to_additional_info, path_to_overall_summary):
+    def compare_original_ratios_to_current_ratios(path_to_additional_info, path_to_overall_summary, result_path):
 
         path_to_additional_info = path_to_additional_info
         path_to_overall_summary = path_to_overall_summary
@@ -159,9 +159,6 @@ class Old_Scripts():
                               aggfunc=np.sum, fill_value=0)
         test.reset_index(drop=False, inplace=True)
         test = test.rename(columns={"Unknown": "Benign"})
-        # test = test[test["scenario"] != "CTU-Honeypot-Capture-4-1"]
-        # test = test[test["scenario"] != "CTU-Honeypot-Capture-5-1"]
-        # test = test[test["scenario"] != "CTU-Honeypot-Capture-7-1"]
         test.columns = test.columns.to_series().apply(lambda x: x.strip().upper())
 
         missing_columns = list(set(additonal_info_df.columns.tolist()) - (set(test.columns.tolist())))
@@ -176,7 +173,7 @@ class Old_Scripts():
         test.sort_values(by='SCENARIO')
         additonal_info_df.sort_values(by='SCENARIO')
 
-        result_path = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\current_dist_2.csv"
+        result_path = result_path
         test.to_csv(result_path, index=False)
 
         test["ATTACK"] = test["ATTACK"].apply(lambda x: (x / (test["ATTACK"].sum())))
@@ -202,12 +199,11 @@ class Old_Scripts():
         test["DDOS"] = test["DDOS"].apply(lambda x: (x / (test["DDOS"].sum())))
 
         test = test.fillna(0)
-        result_path = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\current_dist_relative.csv"
         test = test.sort_values(by="SCENARIO")
         # test.to_csv(result_path, index=False)
 
         additonal_info_df = additonal_info_df.sort_values(by="SCENARIO")
-        additional_info_temp_path = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\add_info_relative.csv"
+        #additional_info_temp_path =
         # additonal_info_df.to_csv(additional_info_temp_path, index=False)
 
         results = test.drop(columns="SCENARIO").subtract(additonal_info_df.drop(columns="SCENARIO"))
@@ -215,7 +211,6 @@ class Old_Scripts():
         results["SCENARIO"] = additonal_info_df["SCENARIO"]
         results = results.sort_values(by="SCENARIO")
 
-        result_path = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\difference.csv"
         # results.to_csv(result_path, index=False)
 
     @staticmethod
@@ -297,11 +292,8 @@ class Old_Scripts():
             merged_df.to_csv(csv_summary_path, index=False)
 
     @staticmethod
-    def split_connection_into_X_equal_parts_for_malpaca(threshold, parts, folder_to_filtered_files,
-                                                        folder_to_move_data_to):
+    def split_connection_into_X_equal_parts_for_malpaca(threshold, parts, folder_to_filtered_files, folder_to_move_data_to):
 
-        # folder_to_filtered_files = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/20_none"
-        # folder_to_move_data_to = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/For Malpaca/Experiment 2 - Split Connection Into X Clusters"
 
         threshold = int(threshold)
         parts = int(parts)
@@ -404,9 +396,9 @@ class Old_Scripts():
             connections_used.clear()
 
     @staticmethod
-    def creating_updating_results_from_clustering():
+    def creating_updating_results_from_clustering(folder_to_results):
 
-        folder_to_results = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Results/Results 1 - Different Default Values"
+        folder_to_results = folder_to_results
 
         folders = sorted([f.path for f in os.scandir(folder_to_results) if f.is_dir()])
 
@@ -514,11 +506,11 @@ class Old_Scripts():
             plt.savefig(detailed_label_performance_matrix_table, dpi=1200, bbox_inches='tight')
 
     @staticmethod
-    def adding_nfstream_info_to_clustering_result_csv():
+    def adding_nfstream_info_to_clustering_result_csv(csv_file, csv_file_2, path_to_folder):
 
-        csv_file = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Test/20_threshold_1_part/summary_20_threshold_1_part_20.csv"
-        csv_file_2 = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Test/20_threshold_1_part/test.csv"
-        path_to_folder = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/For Malpaca/Experiment 2 - Split Connection Into X Clusters/20_threshold_3_parts/20_threshold_1_part"
+        csv_file = csv_file
+        csv_file_2 = csv_file_2
+        path_to_folder = path_to_folder
 
         csv_df = pd.read_csv(csv_file)
         labels = []

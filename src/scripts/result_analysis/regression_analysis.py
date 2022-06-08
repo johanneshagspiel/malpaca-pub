@@ -68,9 +68,6 @@ class Regression_Analysis():
         decision_tree_regressor = tree.DecisionTreeRegressor().fit(X, Y)
         print(decision_tree_regressor.score(X, Y))
 
-        # tree.plot_tree(decision_tree_regressor)
-        # plt.show()
-        test_path = r"C:\Users\Johannes\Desktop\New folder (3)\test.dot"
         dot_data = tree.export_graphviz(decision_tree_regressor, regression_decision_tree,
                                         feature_names=feature_names,
                                         filled=True, rounded=True,

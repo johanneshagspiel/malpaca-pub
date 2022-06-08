@@ -25,9 +25,9 @@ import matplotlib.transforms as mtrans
 class Multiple_Results_Analysis():
 
     @staticmethod
-    def combine_results_of_multiple_clusterings():
+    def combine_results_of_multiple_clusterings(folder_to_results):
 
-        folder_to_results = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Results"
+        folder_to_results = folder_to_results
 
         folders = sorted([f.path for f in os.scandir(folder_to_results) if f.is_dir()])
 

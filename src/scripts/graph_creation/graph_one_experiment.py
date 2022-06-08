@@ -28,11 +28,9 @@ class Graph_One_Experiment():
 
 
     @staticmethod
-    def creating_graphs_for_one_experiment():
+    def creating_graphs_for_one_experiment(path_to_csv_file):
 
-        path_to_csv_file = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\20_none_enriched\Experiment 1 -\15_fixed_threshold/summary_15_fixed_threshold_15.csv"
-        #path_to_csv_file = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\20_none_enriched\Experiment 1 -\5_fixed_threshold/summary_5_fixed_threshold_5.csv"
-        #path_to_csv_file = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\20_none_enriched\Experiment 1 -\100_fixed_threshold_5_skip\summary_100_fixed_threshold_5_skip_100.csv"
+        path_to_csv_file = path_to_csv_file
 
         summary_csv_df = pd.read_csv(path_to_csv_file)
 
@@ -55,7 +53,6 @@ class Graph_One_Experiment():
         name_distribution_graph = "name_graph.png"
         path_to_name_legend_storage = "name_legend.png"
         path_to_name_combined = 'name_combined.png'
-
 
 
         overall_detailed_label_df = summary_csv_df.groupby("clusnum")["application_name"].value_counts().to_frame()
@@ -637,9 +634,9 @@ class Graph_One_Experiment():
 
 
     @staticmethod
-    def per_cluster_get_application_pie_chart():
+    def per_cluster_get_application_pie_chart(path_to_csv_file):
 
-        path_to_csv_file = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Results/Results 2 - Split Connection Into X Clusters/20_threshold_1_part/summary_20_threshold_1_part_20.csv"
+        path_to_csv_file = path_to_csv_file
         csv_df = pd.read_csv(path_to_csv_file)
 
         overall_detailed_label_df = csv_df.groupby("clusnum")["application_name"].value_counts().to_frame()

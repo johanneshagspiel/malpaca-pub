@@ -658,10 +658,10 @@ class Adding_More_Information:
         combined_df.to_csv(path_to_storage, index=False)
 
     @staticmethod
-    def create_summary_from_separate_files_old():
+    def create_summary_from_separate_files_old(path_to_iot_scenarios_folder, folder_to_filtered_files):
 
-        path_to_iot_scenarios_folder = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Original/IoTScenarios"
-        folder_to_filtered_files = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/5_none"
+        path_to_iot_scenarios_folder = path_to_iot_scenarios_folder
+        folder_to_filtered_files = folder_to_filtered_files
 
         to_skip_scenario = "CTU-IoT-Malware-Capture-60-1"
 

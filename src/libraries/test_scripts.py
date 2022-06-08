@@ -32,12 +32,11 @@ class Test_Scripts():
 
 
     @staticmethod
-    def test_csv_file_creation():
+    def test_csv_file_creation(path_to_csv_file):
 
-        path_to_csv_file = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Filtered\5_none\CTU-IoT-Malware-Capture-48-1\2019-02-28-19-15-13-192.168.1.200.pcap\2019-02-28-19-15-13-192.168.1.200.pcap_summary.csv"
-        path_to_pcap_files = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_none\Experiment 1 - Different Default Values\5_fixed_threshold\CTU-IoT-Malware-Capture-48-1_2019-02-28-19-15-13-192.168.1.200.pcap"
-
-        new_csv_file_path = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Test\csv_file_creation\_summary.csv"
+        path_to_csv_file = path_to_csv_file
+        path_to_pcap_files = path_to_pcap_files
+        new_csv_file_path = new_csv_file_path
 
         connections_used = {}
 

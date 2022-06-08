@@ -24,11 +24,6 @@ class Script_Library():
     @staticmethod
     def run_one_malpaca_netflow_experiment(path_to_folder, path_to_results, path_to_detailed_label_folder):
 
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_netflow_max_1000\5_netflow_balanced_10000\Experiment 1 - Best Fixed Length\40_fixed_threshold"
-        # path_to_results = r"C:\Users\Johannes\Desktop\New folder (3)"
-        # path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
-
         experiment_name = os.path.basename(path_to_folder)
 
         expname = experiment_name
@@ -37,13 +32,9 @@ class Script_Library():
 
         malpaca = MalpacaMeImprovedNetflow(path_to_folder, path_to_results, path_to_detailed_label_folder, expname, thresh, RPY2)
 
+
     @staticmethod
     def run_one_malpaca_netflow_window_experiment(path_to_folder, path_to_results, path_to_detailed_label_folder):
-
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_netflow_max_1000\5_netflow_balanced_10000\Experiment 4 - Window Experimentation\100_window_size"
-        # path_to_results = r"C:\Users\Johannes\Desktop\New folder (3)"
-        # path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
 
         experiment_name = os.path.basename(path_to_folder)
 
@@ -70,6 +61,7 @@ class Script_Library():
                                                                                                    folder_to_filtered_files=path_to_filtered_files,
                                                                                                    folder_to_move_data_to=path_to_storage,
                                                                                                    old_file_addition=old_file_addition)
+
 
     @staticmethod
     def create_data_set_for_experiment_3_netflow(path_to_filtered_files, path_to_storage, old_file_addition):
@@ -107,8 +99,6 @@ class Script_Library():
     @staticmethod
     def run_experiment_1_and_3_netflow(path_to_folder, path_to_storage, path_to_detailed_label_folder):
 
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
         path_to_folder = path_to_folder
         path_to_storage = path_to_storage
         path_to_detailed_label_folder = path_to_detailed_label_folder
@@ -129,6 +119,7 @@ class Script_Library():
             RPY2 = False
 
             malpaca = MalpacaMeImprovedNetflow(path_to_folder, path_to_results, path_to_detailed_label_folder, expname, window_size, RPY2)
+
 
     @staticmethod
     def run_experiment_4_netflow(path_to_folder, path_to_storage, path_to_detailed_label_folder):
@@ -152,8 +143,8 @@ class Script_Library():
             window_size = int(experiment_name.split("_")[0])
             RPY2 = False
 
-            malpaca = MalpacaMeImprovedWindowNetflow(path_to_folder, path_to_results, path_to_detailed_label_folder, expname,
-                                              window_size, RPY2)
+            malpaca = MalpacaMeImprovedWindowNetflow(path_to_folder, path_to_results, path_to_detailed_label_folder, expname, window_size, RPY2)
+
 
     @staticmethod
     def create_data_set_for_experiment_4_netflow(path_to_filtered_files, path_to_storage, old_file_addition):
@@ -178,9 +169,6 @@ class Script_Library():
     @staticmethod
     def run_experiments_small(path_to_folder, path_to_storage):
 
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\old\20_non_enriched\Test - Only Small"
-        # path_to_storage = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\old\20_none_enriched\Experiment Small"
-
         folders = sorted([f.path for f in os.scandir(path_to_folder) if f.is_dir()])
 
         for experiment in folders:
@@ -193,13 +181,11 @@ class Script_Library():
             RPY2 = False
 
             malpaca = MalpacaMeImproved(path_to_folder, path_to_results, expname, thresh, RPY2)
+
 
     @staticmethod
     def run_experiments_large(path_to_folder, path_to_storage):
 
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\old\20_non_enriched\Test - Only Large"
-        # path_to_storage = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\old\20_none_enriched\Experiment Large"
-
         folders = sorted([f.path for f in os.scandir(path_to_folder) if f.is_dir()])
 
         for experiment in folders:
@@ -213,13 +199,9 @@ class Script_Library():
 
             malpaca = MalpacaMeImproved(path_to_folder, path_to_results, expname, thresh, RPY2)
 
+
     @staticmethod
     def run_one_experiment(path_to_folder, path_to_results, path_to_detailed_label_folder):
-
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_with_udp_max_1000\5_upd_10000_balanced\Experiment 3 - Selecting Different Parts\20_fixed_threshold_from_end"
-        # path_to_results = r"C:\Users\Johannes\Desktop\New folder (3)"
-        # path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
 
         experiment_name = os.path.basename(path_to_folder)
 
@@ -229,13 +211,9 @@ class Script_Library():
 
         malpaca = MalpacaMeImproved(path_to_folder, path_to_results, path_to_detailed_label_folder, expname, thresh, RPY2)
 
+
     @staticmethod
     def run_window_experiment(path_to_folder, path_to_storage, path_to_detailed_label_folder):
-
-        # path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_with_udp_max_1000\5_balanced_min_20\Experiment 4 - Window Experimentation\30_window_size"
-        # path_to_storage = r"C:\Users\Johannes\Desktop\New folder (3)"
-        # path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
 
         experiment_name = os.path.basename(path_to_folder)
 
@@ -249,8 +227,6 @@ class Script_Library():
 
     @staticmethod
     def re_run_failed_experiment_1_and_3(path_to_for_malpaca_files, path_to_results, path_to_detailed_label_folder):
-
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
 
         for_malpaca_folders = [f.path for f in os.scandir(path_to_for_malpaca_files) if f.is_dir()]
         for_malpaca_folders = [(x, os.path.basename(x)) for x in for_malpaca_folders]
@@ -280,8 +256,6 @@ class Script_Library():
     @staticmethod
     def re_run_failed_experiment_4_window(path_to_for_malpaca_files, path_to_results, path_to_detailed_label_folder):
 
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
         for_malpaca_folders = [f.path for f in os.scandir(path_to_for_malpaca_files) if f.is_dir()]
         for_malpaca_folders = [(x, os.path.basename(x)) for x in for_malpaca_folders]
 
@@ -310,8 +284,6 @@ class Script_Library():
     @staticmethod
     def run_experiment_1(path_to_folder, path_to_storage, path_to_detailed_label_folder):
 
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
         path_to_folder = path_to_folder
         path_to_storage = path_to_storage
         path_to_detailed_label_folder = path_to_detailed_label_folder
@@ -336,8 +308,6 @@ class Script_Library():
 
     @staticmethod
     def run_experiment_2(path_to_folder, path_to_storage, path_to_detailed_label_folder):
-
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
 
         path_to_folder = path_to_folder
         path_to_storage = path_to_storage
@@ -372,8 +342,6 @@ class Script_Library():
     @staticmethod
     def run_experiment_3(path_to_folder, path_to_storage, path_to_detailed_label_folder):
 
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
-
         path_to_folder = path_to_folder
         path_to_storage = path_to_storage
         path_to_detailed_label_folder = path_to_detailed_label_folder
@@ -397,8 +365,6 @@ class Script_Library():
 
     @staticmethod
     def run_experiment_4(path_to_folder, path_to_storage, path_to_detailed_label_folder):
-
-        #path_to_detailed_label_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Additional Info\original_dataset\original_df\total_detailed_labels.csv"
 
         path_to_folder = path_to_folder
         path_to_storage = path_to_storage

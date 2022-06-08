@@ -593,15 +593,15 @@ class Filtered_Dataset_Creation():
         sys.exit()
 
     @staticmethod
-    def filter_connections_based_on_length_into_separate_files(threshold, slice=None):
+    def filter_connections_based_on_length_into_separate_files(threshold, path_to_iot_scenarios_folder, folder_to_store, slice=None):
 
         threshold = threshold
 
         if slice:
             slice = slice
 
-        path_to_iot_scenarios_folder = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Original/IoTScenarios"
-        folder_to_store = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered"
+        path_to_iot_scenarios_folder = path_to_iot_scenarios_folder
+        folder_to_store = folder_to_store
 
         to_skip_scenario = "CTU-IoT-Malware-Capture-60-1"
 
@@ -799,15 +799,15 @@ class Filtered_Dataset_Creation():
         sys.exit()
 
     @staticmethod
-    def restart_process_into_multiple_files_with_to_skip_scenario(threshold, slice=None):
+    def restart_process_into_multiple_files_with_to_skip_scenario(threshold, path_to_iot_scenarios_folder, folder_to_restart_store, slice=None):
 
         threshold = threshold
 
         if slice:
             slice = slice
 
-        path_to_iot_scenarios_folder = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Original/IoTScenarios"
-        folder_to_restart_store = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/5_none"
+        path_to_iot_scenarios_folder = path_to_iot_scenarios_folder
+        folder_to_restart_store = folder_to_restart_store
 
         to_skip_scenario = "CTU-IoT-Malware-Capture-60-1"
 

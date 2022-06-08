@@ -157,12 +157,12 @@ class Nfstream_Operations():
             merged_df.to_csv(path_to_summary_csv_file, index=False)
 
     @staticmethod
-    def analyze_nfstream_results():
+    def analyze_nfstream_results(path_to_nfstream_results, path_to_application_name_file, path_to_application_category_name):
 
-        path_to_nfstream_results = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Test\NFStream\new"
+        path_to_nfstream_results = path_to_nfstream_results
 
-        path_to_application_name_file = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Test\NFStream\new\application_name_smaller.txt"
-        path_to_application_category_name = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Test\NFStream\new\application_category_name_smaller.txt"
+        path_to_application_name_file = path_to_application_name_file
+        path_to_application_category_name = path_to_application_category_name
 
         to_exclude_1 = path_to_nfstream_results + r"\nf_stream_CTU-IoT-Malware-Capture-48-1_2019-02-28-19-15-13-192.168.1.200.pcap.csv"
         to_exclude_2 = path_to_nfstream_results + r"\nf_stream_CTU-IoT-Malware-Capture-49-1_2019-02-28-20-50-15-192.168.1.193.pcap.csv"

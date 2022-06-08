@@ -224,7 +224,6 @@ class For_Malpaca_Preparation_Enriched():
     @staticmethod
     def determine_optimal_threshold(folder_to_filtered_files):
 
-        # folder_to_filtered_files = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/20_none"
         folder_to_filtered_files = folder_to_filtered_files
 
         scan_file_order_path = folder_to_filtered_files + "/" + "scan_order.txt"

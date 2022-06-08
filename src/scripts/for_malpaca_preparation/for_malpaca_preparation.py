@@ -33,7 +33,6 @@ class For_Malpaca_Preparation():
     @staticmethod
     def determine_optimal_threshold(folder_to_filtered_files):
 
-        # folder_to_filtered_files = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/20_none"
         folder_to_filtered_files = folder_to_filtered_files
 
         scan_file_order_path = folder_to_filtered_files + "/" + "scan_order.txt"
@@ -149,62 +148,15 @@ class For_Malpaca_Preparation():
 
                     to_write_list.append(packets_value[-amount:])
 
-                    # for to_write_file in to_write_list:
-                    #
-                    #     new_file_path =
-                    #
-                    #     pktdump = PcapWriter(new_file_path, append=True, sync=True)
-                    #
-                    #     for packet in to_write_file:
-                    #         pktdump.write(packet)
-                    #     pktdump.close()
-
-
-
-                # print("Create csv file")
-                #
-                # csv_df = pd.read_csv(path_to_csv_file)
-                # csv_df["src_ip"] = csv_df["src_ip"].apply(lambda x: str(x))
-                # csv_df["dst_ip"] = csv_df["dst_ip"].apply(lambda x: str(x))
-                #
-                # for piece in range(1, (parts + 1)):
-                #
-                #     new_csv_file_path = new_folder_name + "/" + str(threshold) + "_threshold_" + str(
-                #         piece) + "_part/" + scenario_name + file_name + "_summary.csv"
-                #
-                #     with open(new_csv_file_path, 'w', newline='') as csvfile:
-                #
-                #         csv_writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                #
-                #         new_line = ["src_ip", "dst_ip", "connection_length", "scenario", "file", "label", "detailed_label"]
-                #         csv_writer.writerow(new_line)
-                #
-                #         for (src_ip, dst_ip) in connections_used:
-                #             src_ip = str(src_ip)
-                #             dst_ip = str(dst_ip)
-                #
-                #             label = csv_df[(csv_df["src_ip"] == src_ip) & (csv_df["dst_ip"] == dst_ip)]["label"].values[0]
-                #             detailed_label = \
-                #                 csv_df[(csv_df["src_ip"] == src_ip) & (csv_df["dst_ip"] == dst_ip)][
-                #                     "detailed_label"].values[0]
-                #
-                #             new_line = [str(src_ip), str(dst_ip), str(threshold), scenario_name, file_name, label,
-                #                         detailed_label]
-                #             csv_writer.writerow(new_line)
-                #
-                #     csvfile.close()
-                #
-                # file_packet_dic.clear()
-                # connections_used.clear()
 
 
     @staticmethod
-    def get_data_equal_to_fixed_window_size_for_malpaca(threshold):
+    def get_data_equal_to_fixed_window_size_for_malpaca(threshold, folder_to_filtered_files, folder_to_move_data_to):
 
         threshold = threshold
 
-        folder_to_filtered_files = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Filtered/20_none"
-        folder_to_move_data_to = "C:/Users/Johannes/iCloudDrive/Uni/CSE/Year 3/Q4/Code/Dataset/Storage/Window"
+        folder_to_filtered_files = folder_to_filtered_files
+        folder_to_move_data_to = folder_to_move_data_to
 
         new_folder_path = folder_to_move_data_to + "/" + (str(threshold)) + "_window_size"
         os.mkdir(new_folder_path)
@@ -289,9 +241,6 @@ class For_Malpaca_Preparation():
 
             file_packet_dic.clear()
             connections_used.clear()
-
-
-
 
 
 
@@ -413,6 +362,7 @@ class For_Malpaca_Preparation():
             file_packet_dic.clear()
             connections_used.clear()
 
+
     @staticmethod
     def get_data_skip_x_then_take_fixed_threshold_for_malpaca(skip, threshold, folder_to_filtered_files, folder_to_move_data_to):
 
@@ -528,6 +478,7 @@ class For_Malpaca_Preparation():
 
             file_packet_dic.clear()
             connections_used.clear()
+
 
     @staticmethod
     def get_data_skip_x_then_take_fixed_threshold_from_end_for_malpaca(skip, threshold, folder_to_filtered_files, folder_to_move_data_to):

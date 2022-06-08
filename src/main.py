@@ -22,18 +22,4 @@ from scapy.all import *
 
 if __name__ == '__main__':
 
-
-
-    # path_to_experiment_1 = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\5_netflow_max_1000\5_netflow_balanced_min_20\Experiment 1 - Best Fixed Length"
-    # Multiple_Experiment_Results_Combination.combine_results_from_experiment_1_3_4(path_to_experiment_1)
-
-
-    # path_to_regression = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Analysis\Regression"
-    # Regression_Analysis.regression_analysis(path_to_regression)
-
-
-
-
-    path_to_folder = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\For Malpaca\5_netflow_max_1000\5_netflow_balanced_10000\Experiment 4 - Window Experimentation"
-    path_to_storage = r"C:\Users\Johannes\iCloudDrive\Uni\CSE\Year 3\Q4\Code\Dataset\Results\5_netflow_max_1000\5_netflow_balanced_10000\Experiment 4 - Window Experimentation"
-    Script_Library.run_experiment_4_netflow(path_to_folder, path_to_storage)
+    None
